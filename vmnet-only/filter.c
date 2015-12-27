@@ -85,7 +85,7 @@ static compat_define_mutex(filterIoctlMutex); /* serialize ioctl()s from user sp
  * callbacks can be concurrently executing on multiple threads on multiple
  * CPUs, so we should revisit locking for allowing for that in the future.
  */
-spinlock_t activeRuleLock = SPIN_LOCK_UNLOCKED;
+DEFINE_SPINLOCK(activeRuleLock);
 
 /*
  * Logging.

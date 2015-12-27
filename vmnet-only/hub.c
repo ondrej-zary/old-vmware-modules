@@ -81,7 +81,7 @@ static VNetHub *vnetHub = NULL;
  * so we use __attribute__((unused)) to quiet the compiler.
  */
 
-static spinlock_t vnetHubLock __attribute__((unused)) = SPIN_LOCK_UNLOCKED;
+static DEFINE_SPINLOCK(vnetHubLock);
 
 
 /*

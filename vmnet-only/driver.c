@@ -104,7 +104,7 @@ const uint8 broadcast[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
  * not have vnetStructureMutex already acquired,
  * it is most certainly a bug.
  */
-static rwlock_t vnetPeerLock = RW_LOCK_UNLOCKED;
+static DEFINE_RWLOCK(vnetPeerLock);
 
 /*
  * All concurrent changes to the network structure are

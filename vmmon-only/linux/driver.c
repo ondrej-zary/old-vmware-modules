@@ -785,7 +785,7 @@ LinuxDriver_Close(struct inode *inode, // IN
 
 
 #define POLLQUEUE_MAX_TASK 1000
-static spinlock_t pollQueueLock __attribute__((unused)) = SPIN_LOCK_UNLOCKED;
+static DEFINE_SPINLOCK(pollQueueLock);
 static void *pollQueue[POLLQUEUE_MAX_TASK];
 static unsigned int pollQueueCount = 0;
 
@@ -1046,7 +1046,7 @@ LinuxDriverPoll(struct file *filp,
 		* but unfortunately there is no way how to detect that
 		* we are building for RedHat's kernel...
 		*/
-	       static spinlock_t timerLock = SPIN_LOCK_UNLOCKED;
+	       static DEFINE_SPINLOCK(timerLock);
 
 	       spin_lock(&timerLock);
 	       mod_timer(&linuxState.pollTimer, jiffies + 1);

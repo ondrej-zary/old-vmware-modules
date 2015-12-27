@@ -44,7 +44,7 @@ typedef struct PassthruDevice {
 
 
 static LIST_HEAD(passthruDeviceList);
-static spinlock_t passthruDeviceListLock = SPIN_LOCK_UNLOCKED;
+static DEFINE_SPINLOCK(passthruDeviceListLock);
 static void *pciHolePage = NULL;
 
 /*

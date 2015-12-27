@@ -34,7 +34,7 @@
 struct list_head vsockBindTable[VSOCK_HASH_SIZE + 1];
 struct list_head vsockConnectedTable[VSOCK_HASH_SIZE];
 
-spinlock_t vsockTableLock = SPIN_LOCK_UNLOCKED;
+DEFINE_SPINLOCK(vsockTableLock);
 
 /*
  * snprintf() wasn't exported until 2.4.10: fall back on sprintf in those
