@@ -102,7 +102,6 @@
 #include <linux/miscdevice.h>
 #include <linux/poll.h>
 #include <linux/smp.h>
-#include <linux/smp_lock.h>
 #include <asm/io.h>
 #if defined(__x86_64__) && LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 12)
 #   if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)

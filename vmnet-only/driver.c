@@ -28,7 +28,6 @@
 #include <linux/poll.h>
 
 #include <linux/smp.h>
-#include <linux/smp_lock.h>
 
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
@@ -115,6 +114,7 @@ static rwlock_t vnetPeerLock = RW_LOCK_UNLOCKED;
  * vnetStructureMutex and vnetPeerLock for write.
  */
 compat_define_mutex(vnetStructureMutex);
+compat_define_mutex(vnetMutex);
 
 #if defined(VM_X86_64) && !defined(HAVE_COMPAT_IOCTL)
 /*
@@ -264,11 +264,11 @@ LinuxDriver_Ioctl32_Handler(unsigned int fd,     // IN: (unused)
 			    struct file * filp)  // IN:
 {
    int ret = -ENOTTY;
-   lock_kernel();
+   compat_mutex_lock(&vnetMutex);
    if (filp && filp->f_op && filp->f_op->ioctl == VNetFileOpIoctl) {
       ret = VNetFileOpIoctl(filp->f_dentry->d_inode, filp, iocmd, ioarg);
    }
-   unlock_kernel();
+   compat_mutex_unlock(&vnetMutex);
    return ret;
 }
 
@@ -1134,9 +1134,9 @@ VNetFileOpUnlockedIoctl(struct file    *filp,  // IN:
    if (filp && filp->f_dentry) {
       inode = filp->f_dentry->d_inode;
    }
-   lock_kernel();
+   compat_mutex_lock(&vnetMutex);
    err = VNetFileOpIoctl(inode, filp, iocmd, ioarg);
-   unlock_kernel();
+   compat_mutex_unlock(&vnetMutex);
    return err;
 }
 #endif

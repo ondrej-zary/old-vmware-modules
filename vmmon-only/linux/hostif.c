@@ -46,7 +46,6 @@
 #include <linux/mman.h>
 
 #include <linux/smp.h>
-#include <linux/smp_lock.h>
 
 #include <asm/io.h>
 #include <linux/mc146818rtc.h>
