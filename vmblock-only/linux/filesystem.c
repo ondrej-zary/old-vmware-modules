@@ -44,8 +44,13 @@ static struct inode *GetInode(struct super_block *sb, ino_t ino);
 /* File system operations */
 
 #if defined(VMW_GETSB_2618)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 39)
+static struct dentry *FsOpMount(struct file_system_type *fsType, int flags,
+                     const char *devName, void *rawData);
+#else
 static int FsOpGetSb(struct file_system_type *fsType, int flags,
                      const char *devName, void *rawData, struct vfsmount *mnt);
+#endif
 #else
 static struct super_block *FsOpGetSb(struct file_system_type *fsType, int flags,
                                      const char *devName, void *rawData);
@@ -66,7 +71,11 @@ static size_t fsRootLen;
 static struct file_system_type fsType = {
    .owner = THIS_MODULE,
    .name = VMBLOCK_FS_NAME,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 39)
+   .mount = FsOpMount,
+#else
    .get_sb = FsOpGetSb,
+#endif
    .kill_sb = kill_anon_super,
 };
 
@@ -538,13 +547,13 @@ FsOpReadSuper(struct super_block *sb, // OUT: Superblock object
 /*
  *-----------------------------------------------------------------------------
  *
- * FsOpGetSb --
+ * FsOpGetSb/FsOpMount --
  *
  *    Invokes generic kernel code to prepare superblock for
  *    deviceless filesystem.
  *
  * Results:
- *    0 on success
+ *    0/dentry on success
  *    negative error code on failure
  *
  * Side effects:
@@ -553,6 +562,16 @@ FsOpReadSuper(struct super_block *sb, // OUT: Superblock object
  *-----------------------------------------------------------------------------
  */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 39)
+struct dentry *
+FsOpMount(struct file_system_type *fs_type, // IN: file system type of mount
+          int flags,                        // IN: mount flags
+          const char *dev_name,             // IN: device mounting on
+          void *rawData)                    // IN: mount arguments
+{
+   return mount_nodev(fs_type, flags, rawData, FsOpReadSuper);
+}
+#else
 static int
 FsOpGetSb(struct file_system_type *fs_type, // IN: file system type of mount
           int flags,                        // IN: mount flags
@@ -562,6 +581,7 @@ FsOpGetSb(struct file_system_type *fs_type, // IN: file system type of mount
 {
    return get_sb_nodev(fs_type, flags, rawData, FsOpReadSuper, mnt);
 }
+#endif
 #else
 /*
  *-----------------------------------------------------------------------------
