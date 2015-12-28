@@ -527,7 +527,11 @@ FsOpReadSuper(struct super_block *sb, // OUT: Superblock object
       return -EINVAL;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0)
+   rootDentry = d_make_root(rootInode);
+#else
    rootDentry = d_alloc_root(rootInode);
+#endif
    if (!rootDentry) {
       iput(rootInode);
       return -ENOMEM;
