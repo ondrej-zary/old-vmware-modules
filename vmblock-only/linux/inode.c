@@ -214,7 +214,7 @@ static int
 InodeOpFollowlink(struct dentry *dentry,  // IN : dentry of symlink
                   struct nameidata *nd)   // OUT: stores result
 {
-   int ret;
+   int ret = 0;
    VMBlockInodeInfo *iinfo;
 
    if (!dentry) {
@@ -229,7 +229,11 @@ InodeOpFollowlink(struct dentry *dentry,  // IN : dentry of symlink
       goto out;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 12, 0)
+   nd_set_link(nd, iinfo->name);
+#else
    ret = vfs_follow_link(nd, iinfo->name);
+#endif
 
 out:
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 13)
