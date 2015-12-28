@@ -112,8 +112,12 @@ static Bool VNetBridgeCycleDetect(VNetJack *this, int generation);
 static Bool VNetBridgeIsDeviceWireless(struct net_device *dev);
 static void VNetBridgePortsChanged(VNetJack *this);
 static int  VNetBridgeIsBridged(VNetJack *this);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+static int  VNetBridgeProcShow(struct seq_file *seqf, void *data);
+#else
 static int  VNetBridgeProcRead(char *page, char **start, off_t off,
                                int count, int *eof, void *data);
+#endif
 static void VNetBridgeComputeHeaderPosIPv6(struct sk_buff *skb);
 static PacketStatus VNetCallSMACFunc(struct SMACState *state,
                                      struct sk_buff **skb, void *startOfData,
@@ -271,6 +275,20 @@ VNetBridgeDevCompatible(VNetBridge *bridge,      // IN: Bridge
 }
 
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+static int proc_bridge_open(struct inode *inode, struct file *file)
+{
+       return single_open(file, VNetBridgeProcShow, PDE_DATA(inode));
+}
+
+static const struct file_operations proc_bridge_fops = {
+       .open           = proc_bridge_open,
+       .read           = seq_read,
+       .llseek         = seq_lseek,
+       .release        = seq_release,
+};
+#endif
+
 /*
  *----------------------------------------------------------------------
  *
@@ -369,7 +387,11 @@ VNetBridge_Create(const char *devName, // IN:  name of device (e.g., "eth0")
     */
 
    retval = VNetProc_MakeEntry(bridge->port.jack.name, S_IFREG,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+                               &bridge->port.jack.procEntry, &proc_bridge_fops, bridge);
+#else
                                &bridge->port.jack.procEntry);
+#endif
    if (retval) {
       if (retval == -ENXIO) {
          bridge->port.jack.procEntry = NULL;
@@ -377,8 +399,10 @@ VNetBridge_Create(const char *devName, // IN:  name of device (e.g., "eth0")
          goto out;
       }
    } else {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
       bridge->port.jack.procEntry->read_proc = VNetBridgeProcRead;
       bridge->port.jack.procEntry->data = bridge;
+#endif
    }
 
    /*
@@ -1797,7 +1821,7 @@ VNetBridgeReceiveFromDev(struct sk_buff *skb,         // IN: packet to receive
 /*
  *----------------------------------------------------------------------
  *
- * VNetBridgeProcRead --
+ * VNetBridgeProcRead/VNetBridgeProcShow --
  *
  *      Callback for read operation on this bridge entry in vnets proc fs.
  *
@@ -1811,11 +1835,15 @@ VNetBridgeReceiveFromDev(struct sk_buff *skb,         // IN: packet to receive
  */
 
 int
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+VNetBridgeProcShow(struct seq_file *seqf, // IN/OUT: buffer to write into
+#else
 VNetBridgeProcRead(char    *page,   // IN/OUT: buffer to write into
                    char   **start,  // OUT: 0 if file < 4k, else offset into page
                    off_t    off,    // IN: (unused) offset of read into the file
                    int      count,  // IN: (unused) maximum number of bytes to read
                    int     *eof,    // OUT: TRUE if there is nothing more to read
+#endif
                    void    *data)   // IN: client data - pointer to bridge
 {
    VNetBridge *bridge = (VNetBridge*)data;
@@ -1825,6 +1853,15 @@ VNetBridgeProcRead(char    *page,   // IN/OUT: buffer to write into
       return len;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   VNetPrintPort(&bridge->port, seqf);
+
+   seq_printf(seqf, "dev %s ", bridge->name);
+
+   seq_printf(seqf, "\n");
+
+   return 0;
+#else
    len += VNetPrintPort(&bridge->port, page+len);
 
    len += sprintf(page+len, "dev %s ", bridge->name);
@@ -1834,4 +1871,5 @@ VNetBridgeProcRead(char    *page,   // IN/OUT: buffer to write into
    *start = 0;
    *eof   = 1;
    return len;
+#endif
 }

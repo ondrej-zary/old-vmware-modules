@@ -433,7 +433,7 @@ VNetUserIfReceive(VNetJack       *this, // IN
 /*
  *----------------------------------------------------------------------
  *
- * VNetUserIfProcRead --
+ * VNetUserIfProcRead/VNetUserIfProcShow --
  *
  *      Callback for read operation on this userif entry in vnets proc fs.
  *
@@ -447,6 +447,9 @@ VNetUserIfReceive(VNetJack       *this, // IN
  */
 
 static int
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+VNetUserIfProcShow(struct seq_file    *seqf,  // IN/OUT: buffer to write into
+#else
 VNetUserIfProcRead(char    *page,  // IN/OUT: buffer to write into
                    char   **start, // OUT: 0 if file < 4k, else offset into
                                    //      page
@@ -454,6 +457,7 @@ VNetUserIfProcRead(char    *page,  // IN/OUT: buffer to write into
                    int      count, // IN: maximum number of bytes to read
                    int     *eof,   // OUT: TRUE if there is nothing more to
                                    //      read
+#endif
                    void    *data)  // IN: client data - not used
 {
    VNetUserIF *userIf = (VNetUserIF*)data; 
@@ -463,14 +467,26 @@ VNetUserIfProcRead(char    *page,  // IN/OUT: buffer to write into
       return len;
    }
    
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   VNetPrintPort(&userIf->port, seqf);
+#else
    len += VNetPrintPort(&userIf->port, page+len);
+#endif
    
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   seq_printf(seqf, "read %u written %u queued %u ",
+#else
    len += sprintf(page+len, "read %u written %u queued %u ",
+#endif
                   userIf->stats.read,
                   userIf->stats.written,
                   userIf->stats.queued);
    
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   seq_printf(seqf,
+#else
    len += sprintf(page+len, 
+#endif
 		  "dropped.down %u dropped.mismatch %u "
 		  "dropped.overflow %u dropped.largePacket %u",
                   userIf->stats.droppedDown,
@@ -478,13 +494,31 @@ VNetUserIfProcRead(char    *page,  // IN/OUT: buffer to write into
                   userIf->stats.droppedOverflow,
 		  userIf->stats.droppedLargePacket);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   seq_printf(seqf, "\n");
+   return 0;
+#else
    len += sprintf(page+len, "\n");
    
    *start = 0;
    *eof   = 1;
    return len;
+#endif
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+static int proc_userif_open(struct inode *inode, struct file *file)
+{
+       return single_open(file, VNetUserIfProcShow, PDE_DATA(inode));
+}
+
+static const struct file_operations proc_userif_fops = {
+       .open           = proc_userif_open,
+       .read           = seq_read,
+       .llseek         = seq_lseek,
+       .release        = seq_release,
+};
+#endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 4, 4)
 /*
@@ -1021,7 +1055,11 @@ VNetUserIf_Create(VNetPort **ret) // OUT
     */
    
    retval = VNetProc_MakeEntry(userIf->port.jack.name, S_IFREG,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+                               &userIf->port.jack.procEntry, &proc_userif_fops, userIf);
+#else
                                &userIf->port.jack.procEntry);
+#endif
    if (retval) {
       if (retval == -ENXIO) {
          userIf->port.jack.procEntry = NULL;
@@ -1030,8 +1068,10 @@ VNetUserIf_Create(VNetPort **ret) // OUT
          return retval;
       }
    } else {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
       userIf->port.jack.procEntry->read_proc = VNetUserIfProcRead;
       userIf->port.jack.procEntry->data = userIf;
+#endif
    }
 
    /*

@@ -71,8 +71,12 @@ static void VNetHubReceive(VNetJack *this, struct sk_buff *skb);
 static Bool VNetHubCycleDetect(VNetJack *this, int generation);
 static void VNetHubPortsChanged(VNetJack *this);
 static int  VNetHubIsBridged(VNetJack *this);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+static int  VNetHubProcShow(struct seq_file *seqf, void *data);
+#else
 static int  VNetHubProcRead(char *page, char **start, off_t off,
                             int count, int *eof, void *data);
+#endif
 
 static VNetHub *vnetHub = NULL;
 
@@ -244,6 +248,20 @@ VNetHub_AllocPvn(uint8 id[]) // IN: the PVN ID to alloc on
    return VNetHubAlloc(TRUE, -1, id);
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+static int proc_hub_open(struct inode *inode, struct file *file)
+{
+       return single_open(file, VNetHubProcShow, PDE_DATA(inode));
+}
+
+static const struct file_operations proc_hub_fops = {
+       .open           = proc_hub_open,
+       .read           = seq_read,
+       .llseek         = seq_lseek,
+       .release        = seq_release,
+};
+#endif
+
 /*
  *----------------------------------------------------------------------
  *
@@ -360,7 +378,11 @@ VNetHubAlloc(Bool allocPvn, // IN: TRUE for PVN, FALSE for vnet
           * Make proc entry for this jack.
           */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+         retval = VNetProc_MakeEntry(jack->name, S_IFREG, &jack->procEntry, &proc_hub_fops, jack);
+#else
          retval = VNetProc_MakeEntry(jack->name, S_IFREG, &jack->procEntry);
+#endif
          if (retval) {
             if (retval == -ENXIO) {
                jack->procEntry = NULL;
@@ -369,8 +391,10 @@ VNetHubAlloc(Bool allocPvn, // IN: TRUE for PVN, FALSE for vnet
                return NULL;
             }
          } else {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
             jack->procEntry->read_proc = VNetHubProcRead;
             jack->procEntry->data = jack;
+#endif
          }
 
          /*
@@ -695,7 +719,7 @@ VNetHubIsBridged(VNetJack *this)
 /*
  *----------------------------------------------------------------------
  *
- * VNetHubProcRead --
+ * VNetHubProcRead/VNetHubProcShow --
  *
  *      Callback for read operation on hub entry in vnets proc fs.
  *
@@ -709,11 +733,15 @@ VNetHubIsBridged(VNetJack *this)
  */
 
 int
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+VNetHubProcShow(struct seq_file  *seqf,   // IN/OUT: buffer to write into
+#else
 VNetHubProcRead(char    *page,   // IN/OUT: buffer to write into
                 char   **start,  // OUT: 0 if file < 4k, else offset into page
                 off_t    off,    // IN: offset of read into the file
                 int      count,  // IN: maximum number of bytes to read
                 int     *eof,    // OUT: TRUE if there is nothing more to read
+#endif
                 void    *data)   // IN: client data - not used
 {
    VNetJack *jack = (VNetJack*)data;
@@ -725,6 +753,15 @@ VNetHubProcRead(char    *page,   // IN/OUT: buffer to write into
    }
    hub = (VNetHub*)jack->private;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   VNetPrintJack(jack, seqf);
+
+   seq_printf(seqf, "tx %u ", hub->stats[jack->index].tx);
+
+   seq_printf(seqf, "\n");
+
+   return 0;
+#else
    len += VNetPrintJack(jack, page+len);
 
    len += sprintf(page+len, "tx %u ", hub->stats[jack->index].tx);
@@ -734,4 +771,5 @@ VNetHubProcRead(char    *page,   // IN/OUT: buffer to write into
    *start = 0;
    *eof   = 1;
    return len;
+#endif
 }

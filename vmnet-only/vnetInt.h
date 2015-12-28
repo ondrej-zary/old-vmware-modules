@@ -170,11 +170,21 @@ VNetJack *VNetDisconnect(VNetJack *jack);
 void VNetSend(const VNetJack *jack, struct sk_buff *skb);
 
 int VNetProc_MakeEntry(char *name, int mode,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+                       VNetProcEntry **ret,
+		       const struct file_operations *fops,
+		       void *data);
+#else
                        VNetProcEntry **ret);
+#endif
 
 void VNetProc_RemoveEntry(VNetProcEntry *node);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+void VNetPrintJack(const VNetJack *jack, struct seq_file *seqf);
+#else
 int VNetPrintJack(const VNetJack *jack, char *buf);
+#endif
 
 int VNet_MakeMACAddress(VNetPort *port);
 
@@ -193,7 +203,11 @@ Bool VNetPacketMatch(const uint8 *destAddr, const uint8 *ifAddr,
 
 Bool VNetCycleDetectIf(const char *name, int generation);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+void VNetPrintPort(const VNetPort *port, struct seq_file *seqf);
+#else
 int VNetPrintPort(const VNetPort *port, char *buf);
+#endif
 
 int VNetSnprintf(char *str, size_t size, const char *format, ...);
 

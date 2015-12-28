@@ -1662,21 +1662,39 @@ VNetSetMACUnique(VNetPort *port,            // IN:
  *----------------------------------------------------------------------
  */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+void
+VNetPrintJack(const VNetJack *jack, // IN: jack
+              struct seq_file *seqf)  // OUT: info about jack
+#else
 int
 VNetPrintJack(const VNetJack *jack, // IN: jack
               char           *buf)  // OUT: info about jack
+#endif
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
    int len = 0;
+#endif
 
    read_lock(&vnetPeerLock);
    if (!jack->peer) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+      seq_printf(seqf, "connected not ");
+#else
       len += sprintf(buf+len, "connected not ");
+#endif
    } else {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+      seq_printf(seqf, "connected %s ", jack->peer->name);
+#else
       len += sprintf(buf+len, "connected %s ", jack->peer->name);
+#endif
    }
    read_unlock(&vnetPeerLock);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
    return len;
+#endif
 }
 
 
@@ -1696,52 +1714,104 @@ VNetPrintJack(const VNetJack *jack, // IN: jack
  *----------------------------------------------------------------------
  */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+void
+VNetPrintPort(const VNetPort *port, // IN: port
+              struct seq_file *seqf)  // OUT: info about port
+#else
 int
 VNetPrintPort(const VNetPort *port, // IN: port
               char           *buf)  // OUT: info about port
+#endif
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
    int len = 0;
+#endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   VNetPrintJack(&port->jack, seqf);
+#else
    len += VNetPrintJack(&port->jack, buf+len);
+#endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   seq_printf(seqf, "mac %02x:%02x:%02x:%02x:%02x:%02x ",
+#else
    len += sprintf(buf+len, "mac %02x:%02x:%02x:%02x:%02x:%02x ",
+#endif
                   port->paddr[0], port->paddr[1], port->paddr[2],
                   port->paddr[3], port->paddr[4], port->paddr[5]);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   seq_printf(seqf, "ladrf %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x ",
+#else
    len += sprintf(buf+len, "ladrf %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x ",
+#endif
                   port->ladrf[0], port->ladrf[1], port->ladrf[2],
                   port->ladrf[3], port->ladrf[4], port->ladrf[5],
                   port->ladrf[6], port->ladrf[7]);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   seq_printf(seqf, "flags IFF_RUNNING");
+#else
    len += sprintf(buf+len, "flags IFF_RUNNING");
+#endif
 
    if (port->flags & IFF_UP) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+      seq_printf(seqf, ",IFF_UP");
+#else
       len += sprintf(buf+len, ",IFF_UP");
+#endif
    }
 
    if (port->flags & IFF_BROADCAST) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+      seq_printf(seqf, ",IFF_BROADCAST");
+#else
       len += sprintf(buf+len, ",IFF_BROADCAST");
+#endif
    }
 
    if (port->flags & IFF_DEBUG) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+      seq_printf(seqf, ",IFF_DEBUG");
+#else
       len += sprintf(buf+len, ",IFF_DEBUG");
+#endif
    }
 
    if (port->flags & IFF_PROMISC) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+      seq_printf(seqf, ",IFF_PROMISC");
+#else
       len += sprintf(buf+len, ",IFF_PROMISC");
+#endif
    }
 
    if (port->flags & IFF_MULTICAST) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+      seq_printf(seqf, ",IFF_MULTICAST");
+#else
       len += sprintf(buf+len, ",IFF_MULTICAST");
+#endif
    }
 
    if (port->flags & IFF_ALLMULTI) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+      seq_printf(seqf, ",IFF_ALLMULTI");
+#else
       len += sprintf(buf+len, ",IFF_ALLMULTI");
+#endif
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   seq_printf(seqf, " ");
+#else
    len += sprintf(buf+len, " ");
 
    return len;
+#endif
 }
 
 

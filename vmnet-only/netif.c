@@ -67,8 +67,12 @@ static void VNetNetifSetMulticast(struct net_device *dev);
 static void VNetNetifTxTimeout(struct net_device *dev);
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+static int  VNetNetIfProcShow(struct seq_file *seqf, void *data);
+#else
 static int  VNetNetIfProcRead(char *page, char **start, off_t off,
                               int count, int *eof, void *data);
+#endif
 
 
 #if 0
@@ -172,6 +176,19 @@ VNetNetIfSetup(struct net_device *dev)  // IN:
 #endif
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+static int proc_netif_open(struct inode *inode, struct file *file)
+{
+       return single_open(file, VNetNetIfProcShow, PDE_DATA(inode));
+}
+
+static const struct file_operations proc_netif_fops = {
+       .open           = proc_netif_open,
+       .read           = seq_read,
+       .llseek         = seq_lseek,
+       .release        = seq_release,
+};
+#endif
 
 /*
  *----------------------------------------------------------------------
@@ -261,7 +278,11 @@ VNetNetIf_Create(char *devName,  // IN:
     */
    
    retval = VNetProc_MakeEntry(netIf->port.jack.name, S_IFREG,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+                               &netIf->port.jack.procEntry, &proc_netif_fops, netIf);
+#else
                                &netIf->port.jack.procEntry);
+#endif
    if (retval) {
       if (retval == -ENXIO) {
          netIf->port.jack.procEntry = NULL;
@@ -270,8 +291,10 @@ VNetNetIf_Create(char *devName,  // IN:
          goto out;
       }
    } else {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
       netIf->port.jack.procEntry->read_proc = VNetNetIfProcRead;
       netIf->port.jack.procEntry->data = netIf;
+#endif
    }
 
    /*
@@ -659,7 +682,7 @@ VNetNetifGetStats(struct net_device *dev) // IN:
 /*
  *----------------------------------------------------------------------
  *
- * VNetNetIfProcRead --
+ * VNetNetIfProcRead/VNetNetIfProcShow --
  *
  *      Callback for read operation on this netif entry in vnets proc fs.
  *
@@ -673,11 +696,15 @@ VNetNetifGetStats(struct net_device *dev) // IN:
  */
 
 int
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+VNetNetIfProcShow(struct seq_file *seqf, // IN/OUT: buffer to write into
+#else
 VNetNetIfProcRead(char   *page,  // IN/OUT: buffer to write into
                   char  **start, // OUT: 0 if file < 4k, else offset into page
                   off_t   off,   // IN: (unused) offset of read into the file
                   int     count, // IN: (unused) maximum number of bytes to read
                   int    *eof,   // OUT: TRUE if there is nothing more to read
+#endif
                   void   *data)  // IN: client data
 {
    VNetNetIF *netIf = (VNetNetIF*)data; 
@@ -686,7 +713,16 @@ VNetNetIfProcRead(char   *page,  // IN/OUT: buffer to write into
    if (!netIf) {
       return len;
    }
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   VNetPrintPort(&netIf->port, seqf);
+
+   seq_printf(seqf, "dev %s ", netIf->dev->name);
    
+   seq_printf(seqf, "\n");
+
+   return 0;
+#else
    len += VNetPrintPort(&netIf->port, page+len);
 
    len += sprintf(page+len, "dev %s ", netIf->devName);
@@ -696,4 +732,5 @@ VNetNetIfProcRead(char   *page,  // IN/OUT: buffer to write into
    *start = 0;
    *eof   = 1;
    return len;
+#endif
 }

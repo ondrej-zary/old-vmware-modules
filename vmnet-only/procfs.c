@@ -46,7 +46,13 @@
 #if defined(CONFIG_PROC_FS)
 
 static int VNetProcMakeEntryInt(VNetProcEntry *parent, char *name, int mode,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+                                VNetProcEntry  **ret,
+                                const struct file_operations *fops,
+                                void *data);
+#else
                                 VNetProcEntry **ret);
+#endif
 static void VNetProcRemoveEntryInt(VNetProcEntry *node, VNetProcEntry *parent);
 
 static VNetProcEntry *base = NULL;
@@ -71,7 +77,16 @@ static VNetProcEntry *base = NULL;
 int
 VNetProc_Init(void)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   base = proc_mkdir("vmnet", NULL);
+   if (IS_ERR(base)) {
+      base = NULL;
+      return PTR_ERR(base);
+   }
+   return 0;
+#else
    return VNetProcMakeEntryInt(NULL, "vmnet", S_IFDIR, &base);
+#endif
 }
 
 
@@ -119,10 +134,20 @@ int
 VNetProcMakeEntryInt(VNetProcEntry  *parent, // IN:
 		     char            *name,  // IN:
 		     int              mode,  // IN:
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+		     VNetProcEntry  **ret,
+		     const struct file_operations *fops,
+		     void *data)
+#else
 		     VNetProcEntry  **ret)   // OUT:
+#endif
 {
    VNetProcEntry *ent;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   ent = proc_create_data(name, mode, base, fops, data);
+#else
    ent = create_proc_entry(name, mode, parent);
+#endif
    *ret = ent;
    if (!ent)
       return -ENOMEM;
@@ -151,7 +176,11 @@ VNetProcRemoveEntryInt(VNetProcEntry *node,
                        VNetProcEntry *parent)
 {
    if (node) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+      proc_remove(node);
+#else
       remove_proc_entry(node->name, parent);
+#endif
    }
 }
 
@@ -176,9 +205,19 @@ VNetProcRemoveEntryInt(VNetProcEntry *node,
 int
 VNetProc_MakeEntry(char            *name,  // IN:
 		   int              mode,  // IN:
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+		   VNetProcEntry  **ret,
+		   const struct file_operations *fops,
+		   void *data)
+#else
 		   VNetProcEntry  **ret)   // OUT:
+#endif
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
+   return VNetProcMakeEntryInt(base, name, mode, ret, fops, data);
+#else
    return VNetProcMakeEntryInt(base, name, mode, ret);
+#endif
 }
 
 
