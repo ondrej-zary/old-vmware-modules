@@ -32,7 +32,11 @@
 #include "block.h"
 
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0)
+static int DentryOpRevalidate(struct dentry *dentry, unsigned int flags);
+#else
 static int DentryOpRevalidate(struct dentry *dentry, struct nameidata *nd);
+#endif
 
 struct dentry_operations LinkDentryOps = {
    .d_revalidate = DentryOpRevalidate,
@@ -60,7 +64,11 @@ struct dentry_operations LinkDentryOps = {
 
 static int
 DentryOpRevalidate(struct dentry *dentry,  // IN: dentry revalidating
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0)
+                   unsigned int flags)     // IN: lookup flags
+#else
                    struct nameidata *nd)   // IN: lookup flags & intent
+#endif
 {
    VMBlockInodeInfo *iinfo;
    struct nameidata actualNd;
@@ -101,7 +109,11 @@ DentryOpRevalidate(struct dentry *dentry,  // IN: dentry revalidating
    if (actualDentry &&
        actualDentry->d_op &&
        actualDentry->d_op->d_revalidate) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0)
+      return actualDentry->d_op->d_revalidate(actualDentry, flags);
+#else
       return actualDentry->d_op->d_revalidate(actualDentry, nd);
+#endif
    }
 
    if (compat_path_lookup(iinfo->name, 0, &actualNd)) {
