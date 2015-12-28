@@ -40,10 +40,15 @@ typedef struct FilldirInfo {
 
 /* File operations */
 static int FileOpOpen(struct inode *inode, struct file *file);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+static int FileOpReaddir(struct file *file, struct dir_context *ctx);
+#else
 static int FileOpReaddir(struct file *file, void *dirent, filldir_t filldir);
+#endif
 static int FileOpRelease(struct inode *inode, struct file *file);
 
 /* Local functions */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 11, 0)
 #if defined(VMW_FILLDIR_2618)
 static int Filldir(void *buf, const char *name, int namelen,
                    loff_t offset, u64 ino, unsigned int d_type);
@@ -54,9 +59,14 @@ static int Filldir(void *buf, const char *name, int namelen,
 static int Filldir(void *buf, const char *name, int namelen,
                    off_t offset, ino_t ino, unsigned int d_type);
 #endif
+#endif
 
 struct file_operations RootFileOps = {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+   .iterate = FileOpReaddir,
+#else
    .readdir = FileOpReaddir,
+#endif
    .open    = FileOpOpen,
    .release = FileOpRelease,
 };
@@ -150,11 +160,17 @@ FileOpOpen(struct inode *inode,  // IN
 
 static int
 FileOpReaddir(struct file *file,  // IN
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+              struct dir_context *ctx)  // IN
+#else
               void *dirent,       // IN
               filldir_t filldir)  // IN
+#endif
 {
    int ret;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 11, 0)
    FilldirInfo info;
+#endif
    struct file *actualFile;
 
    if (!file) {
@@ -168,12 +184,19 @@ FileOpReaddir(struct file *file,  // IN
       return -EINVAL;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+   /* Ricky Wong Yung Fei:
+    * Manipulation of pos is now handled internally by iterate_dir().
+    */
+   ret = iterate_dir(actualFile, ctx);
+#else
    info.filldir = filldir;
    info.dirent = dirent;
 
    actualFile->f_pos = file->f_pos;
    ret = vfs_readdir(actualFile, Filldir, &info);
    file->f_pos = actualFile->f_pos;
+#endif
 
    return ret;
 }
@@ -240,6 +263,7 @@ FileOpRelease(struct inode *inode, // IN
  *----------------------------------------------------------------------------
  */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 11, 0)
 #if defined(VMW_FILLDIR_2618)
 static int
 Filldir(void *buf,              // IN: Dirent buffer passed from FileOpReaddir
@@ -271,5 +295,6 @@ Filldir(void *buf,              // IN: Dirent buffer passed from FileOpReaddir
    /* Specify DT_LNK regardless */
    return info->filldir(info->dirent, name, namelen, offset, ino, DT_LNK);
 }
+#endif
 
 
