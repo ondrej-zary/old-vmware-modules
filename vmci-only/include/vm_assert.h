@@ -272,7 +272,7 @@ EXTERN void WarningThrottled(uint32 *count, const char *fmt, ...)
 #define ASSERT_ON_COMPILE(e) \
    do { \
       enum { AssertOnCompileMisused = ((e) ? 1 : -1) }; \
-      typedef char AssertOnCompileFailed[AssertOnCompileMisused]; \
+      __attribute__((unused)) typedef char AssertOnCompileFailed[AssertOnCompileMisused]; \
    } while (0)
 
 

@@ -2182,7 +2182,7 @@ Atomic_Write64(Atomic_uint64 *var, // IN
                                       && 8 * sizeof (out) == size             \
                                       && 8 * sizeof (cast) == size            \
                                          ? 1 : -1 };                          \
-      typedef char AssertOnCompileFailed[AssertOnCompileMisused];             \
+      __attribute__((unused)) typedef char AssertOnCompileFailed[AssertOnCompileMisused];             \
    }                                                                          \
                                                                               \
                                                                               \
