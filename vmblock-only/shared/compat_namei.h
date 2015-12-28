@@ -41,7 +41,9 @@
 #endif
 
 /* path_lookup was exported in 2.4.25 */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 4, 25)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 39)
+#define compat_path_lookup(path_, flags, nd)    kern_path(path_, flags, nd.path)
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2, 4, 25)
 #define compat_path_lookup(path, flags, nd)     path_lookup(path, flags, nd)
 #else
 #define compat_path_lookup(path, flags, nd)     \
