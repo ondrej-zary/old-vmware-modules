@@ -572,10 +572,18 @@ VNetCsumCopyDatagram(const struct sk_buff *skb,	// IN: skb to copy
 	 unsigned int tmpCsum;
 	 const void *vaddr;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 2, 0)
+	 vaddr = kmap(skb_frag_page(frag));
+#else
 	 vaddr = kmap(frag->page);
+#endif
 	 tmpCsum = csum_and_copy_to_user(vaddr + frag->page_offset,
 					 curr, frag->size, 0, &err);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 2, 0)
+	 kunmap(skb_frag_page(frag));
+#else
 	 kunmap(frag->page);
+#endif
 	 if (err) {
 	    return err;
 	 }
