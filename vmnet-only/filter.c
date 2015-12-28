@@ -40,6 +40,9 @@
 #include "vnetFilterInt.h"
 #include "vnetInt.h"
 #include "vmnetInt.h"
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 2, 0)
+#include <linux/export.h>
+#endif
 
 // VNet_FilterLogPacket.action for dropped packets
 #define VNET_FILTER_ACTION_DRP         (1)
