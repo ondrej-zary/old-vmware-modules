@@ -80,7 +80,11 @@ IOMMU_SetupMMU(VMLinux *vmLinux,               // IN: virtual machine descriptor
       printk(KERN_ERR "%s: IOMMU domain already exists.\n", __func__);
       return -EBUSY;
    }
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 2, 0)
+   if (!(vmLinux->iommuDomain = iommu_domain_alloc(&pci_bus_type))) {
+#else
    if (!(vmLinux->iommuDomain = iommu_domain_alloc())) {
+#endif
       printk(KERN_ERR "%s: IOMMU domain could not be allocated.\n", __func__);
       return -ENODEV;
    }
