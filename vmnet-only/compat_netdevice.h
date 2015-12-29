@@ -176,7 +176,11 @@ compat_alloc_netdev(int priv_size,
 }
 #   define compat_free_netdev(dev)     kfree(dev)
 #else
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)
+#   define compat_alloc_netdev(size, mask, setup) alloc_netdev(size, mask, NET_NAME_UNKNOWN, setup)
+#else
 #   define compat_alloc_netdev(size, mask, setup) alloc_netdev(size, mask, setup)
+#endif
 #   define compat_free_netdev(dev)                free_netdev(dev)
 #endif
 
