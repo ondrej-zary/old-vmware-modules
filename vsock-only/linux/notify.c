@@ -513,7 +513,11 @@ VSockVmciHandleWrote(struct sock *sk,            // IN
    PKT_FIELD(vsk, sentWaitingRead) = FALSE;
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0)
+   sk->compat_sk_data_ready(sk);
+#else
    sk->compat_sk_data_ready(sk, 0);
+#endif
 }
 
 
