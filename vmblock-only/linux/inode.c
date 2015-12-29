@@ -189,7 +189,11 @@ InodeOpReadlink(struct dentry *dentry,  // IN : dentry of symlink
       return -EINVAL;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0)
+   return readlink_copy(buffer, buflen, iinfo->name);
+#else
    return vfs_readlink(dentry, buffer, buflen, iinfo->name);
+#endif
 }
 
 
