@@ -53,7 +53,11 @@
 #  include <linux/iobuf.h>      /* For map_user_kiobuf() and unmap_kiobuf() */
 #  include "pgtbl.h"            /* For PgtblKVa2MPN */
 #endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+#include <linux/skbuff.h>
+#else
 #include <linux/socket.h>       /* For memcpy_{to,from}iovec(). */
+#endif
 #include <linux/pagemap.h>      /* For page_cache_release() */
 #include "vm_assert.h"
 #include "vmci_kernel_if.h"
@@ -1145,11 +1149,19 @@ __VMCIMemcpyToQueue(VMCIQueue *queue,   // OUT:
       }
 
       if (isIovec) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+         struct msghdr *msg = (struct msghdr *)src;
+#else
          struct iovec *iov = (struct iovec *)src;
+#endif
          int err;
 
          /* The iovec will track bytesCopied internally. */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+         err = memcpy_from_msg((u8 *)va + pageOffset, msg, toCopy);
+#else
          err = memcpy_fromiovec((uint8 *)va + pageOffset, iov, toCopy);
+#endif
          if (err != 0) {
             kunmap(queue->page[pageIndex]);
             return err;
@@ -1209,11 +1221,19 @@ __VMCIMemcpyFromQueue(void *dest,             // OUT:
       }
 
       if (isIovec) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+         struct msghdr *msg = (struct msghdr *)dest;
+#else
          struct iovec *iov = (struct iovec *)dest;
+#endif
          int err;
 
          /* The iovec will track bytesCopied internally. */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+         err = memcpy_to_msg(msg, (uint8 *)va + pageOffset, toCopy);
+#else
          err = memcpy_toiovec(iov, (uint8 *)va + pageOffset, toCopy);
+#endif
          if (err != 0) {
             kunmap(queue->page[pageIndex]);
             return err;
