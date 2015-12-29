@@ -2446,8 +2446,10 @@ __VSockVmciCreate(struct net *net,       // IN: Network namespace
                  vsockVmciProto.slab_obj_size, vsockVmciProto.slab);
 #elif LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 24)
    sk = sk_alloc(vsockVmciFamilyOps.family, priority, &vsockVmciProto, 1);
-#else
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
    sk = sk_alloc(net, vsockVmciFamilyOps.family, priority, &vsockVmciProto);
+#else
+   sk = sk_alloc(net, vsockVmciFamilyOps.family, priority, &vsockVmciProto, 1);
 #endif
    if (!sk) {
       return NULL;
