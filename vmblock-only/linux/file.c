@@ -126,7 +126,11 @@ FileOpOpen(struct inode *inode,  // IN
     * and that would try to acquire the inode's semaphore; if the two inodes
     * are the same we'll deadlock.
     */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+   if (actualFile->f_path.dentry && inode == actualFile->f_path.dentry->d_inode) {
+#else
    if (actualFile->f_dentry && inode == actualFile->f_dentry->d_inode) {
+#endif
       Warning("FileOpOpen: identical inode encountered, open cannot succeed.\n");
       if (filp_close(actualFile, current->files) < 0) {
          Warning("FileOpOpen: unable to close opened file.\n");

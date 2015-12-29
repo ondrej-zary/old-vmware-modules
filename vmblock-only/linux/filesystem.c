@@ -324,7 +324,11 @@ Iget(struct super_block *sb,    // IN: file system superblock object
 {
    VMBlockInodeInfo *iinfo;
    struct inode *inode;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+   struct path actualNd;
+#else
    struct nameidata actualNd;
+#endif
 
    ASSERT(sb);
 
