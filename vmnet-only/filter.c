@@ -209,9 +209,13 @@ VNetFilterHookFn(unsigned int hooknum,                 // IN:
 #else
                  struct sk_buff **pskb,                // IN:
 #endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
+                 const struct nf_hook_state *state)
+#else
                  const struct net_device *in,          // IN:
                  const struct net_device *out,         // IN:
                  int (*okfn)(struct sk_buff *))        // IN:
+#endif
 {
 #ifndef VMW_NFHOOK_USES_SKB
    struct sk_buff *skb = *pskb;
