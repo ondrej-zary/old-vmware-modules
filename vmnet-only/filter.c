@@ -199,7 +199,9 @@ ForwardPacket(uint16 action,  // IN: reason code
 #endif
 
 static unsigned int
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+VNetFilterHookFn(void *priv,
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0)
 VNetFilterHookFn(const struct nf_hook_ops *ops,        // IN:
 #else
 VNetFilterHookFn(unsigned int hooknum,                 // IN:
@@ -256,7 +258,9 @@ VNetFilterHookFn(unsigned int hooknum,                 // IN:
 
    /* When the host transmits, hooknum is VMW_NF_INET_POST_ROUTING. */
    /* When the host receives, hooknum is VMW_NF_INET_LOCAL_IN. */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+   transmit = (state->hook == VMW_NF_INET_POST_ROUTING);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0)
    transmit = (ops->hooknum == VMW_NF_INET_POST_ROUTING);
 #else
    transmit = (hooknum == VMW_NF_INET_POST_ROUTING);

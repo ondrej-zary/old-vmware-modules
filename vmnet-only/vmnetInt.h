@@ -113,7 +113,7 @@ extern struct proto vmnet_proto;
 /*
  * The "owner" field in nf_hook_ops got added in 2.5.69
  */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 5, 69)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 5, 69) && LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 0)
 #   define compat_nf_hook_owner  .owner = THIS_MODULE,
 #else
 #   define compat_nf_hook_owner
