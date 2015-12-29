@@ -322,7 +322,7 @@ init_module(void)
 void
 cleanup_module(void)
 {
-   int retval;
+   int retval = 0;
 
    unregister_ioctl32_handlers();
 
@@ -331,7 +331,11 @@ cleanup_module(void)
    /*
     * XXX smp race?
     */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0)
+   misc_deregister(&linuxState.misc);
+#else
    retval = misc_deregister(&linuxState.misc);
+#endif
 
    if (retval) {
       Warning("Module %s: error unregistering\n", linuxState.deviceName);

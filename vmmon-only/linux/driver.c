@@ -551,9 +551,13 @@ cleanup_module(void)
 #ifdef VMX86_DEVEL
    unregister_chrdev(linuxState.major, linuxState.deviceName);
 #else
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0)
+   misc_deregister(&linuxState.misc);
+#else
    if (misc_deregister(&linuxState.misc)) {
       Warning("Module %s: error unregistering\n", linuxState.deviceName);
    }
+#endif
 #endif
 
    Log("Module %s: unloaded\n", linuxState.deviceName);
