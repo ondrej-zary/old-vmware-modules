@@ -42,7 +42,9 @@ static struct dentry *InodeOpLookup(struct inode *dir,
                                     struct dentry *dentry, struct nameidata *nd);
 #endif
 static int InodeOpReadlink(struct dentry *dentry, char __user *buffer, int buflen);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 13)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)
+static const char *InodeOpFollowlink(struct dentry *dentry, void **cookie);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 13)
 static void *InodeOpFollowlink(struct dentry *dentry, struct nameidata *nd);
 #else
 static int InodeOpFollowlink(struct dentry *dentry, struct nameidata *nd);
@@ -214,13 +216,19 @@ InodeOpReadlink(struct dentry *dentry,  // IN : dentry of symlink
  *----------------------------------------------------------------------------
  */
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 13)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)
+static const char *
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 13)
 static void *
 #else
 static int
 #endif
 InodeOpFollowlink(struct dentry *dentry,  // IN : dentry of symlink
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)
+		  void **cookie)          // OUT: stores result
+#else
                   struct nameidata *nd)   // OUT: stores result
+#endif
 {
    int ret = 0;
    VMBlockInodeInfo *iinfo;
@@ -237,7 +245,9 @@ InodeOpFollowlink(struct dentry *dentry,  // IN : dentry of symlink
       goto out;
    }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 12, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)
+   return *cookie = (char *)(iinfo->name);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 12, 0)
    nd_set_link(nd, iinfo->name);
 #else
    ret = vfs_follow_link(nd, iinfo->name);
