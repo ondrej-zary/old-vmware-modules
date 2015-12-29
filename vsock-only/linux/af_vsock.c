@@ -3828,7 +3828,11 @@ VSockVmciDgramSendmsg(struct kiocb *kiocb,          // UNUSED
       goto out;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+   memcpy_from_msg(VMCI_DG_PAYLOAD(dg), msg, len);
+#else
    memcpy_fromiovec(VMCI_DG_PAYLOAD(dg), msg->msg_iov, len);
+#endif
 
    dg->dst = VMCI_MAKE_HANDLE(remoteAddr->svm_cid, remoteAddr->svm_port);
    dg->src = VMCI_MAKE_HANDLE(vsk->localAddr.svm_cid, vsk->localAddr.svm_port);
@@ -4180,7 +4184,11 @@ VSockVmciStreamSendmsg(struct kiocb *kiocb,          // UNUSED
        */
 
       written = VMCIQueue_EnqueueV(vsk->produceQ, vsk->consumeQ,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+                                   vsk->produceSize, (struct iovec *)msg->msg_iter.iov,
+#else
                                    vsk->produceSize, msg->msg_iov,
+#endif
                                    len - totalWritten);
       if (written < 0) {
          err = -ENOMEM;
@@ -4302,7 +4310,11 @@ VSockVmciDgramRecvmsg(struct kiocb *kiocb,          // UNUSED
    }
 
    /* Place the datagram payload in the user's iovec. */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+   err = skb_copy_datagram_msg(skb, sizeof *dg, msg, payloadLen);
+#else
    err = skb_copy_datagram_iovec(skb, sizeof *dg, msg->msg_iov, payloadLen);
+#endif
    if (err) {
       goto out;
    }
@@ -4499,10 +4511,18 @@ VSockVmciStreamRecvmsg(struct kiocb *kiocb,          // UNUSED
 
    if (flags & MSG_PEEK) {
       copied = VMCIQueue_PeekV(vsk->produceQ, vsk->consumeQ,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+                               vsk->consumeSize, (struct iovec *)msg->msg_iter.iov, len);
+#else
                                vsk->consumeSize, msg->msg_iov, len);
+#endif
    } else {
       copied = VMCIQueue_DequeueV(vsk->produceQ, vsk->consumeQ,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+                                  vsk->consumeSize, (struct iovec *)msg->msg_iter.iov, len);
+#else
                                   vsk->consumeSize, msg->msg_iov, len);
+#endif
    }
 
    if (copied < 0) {
