@@ -250,7 +250,7 @@ static int VSockVmciStreamSendmsg(struct kiocb *kiocb,
                                   struct socket *sock, struct msghdr *msg, int len);
 static int VSockVmciStreamRecvmsg(struct kiocb *kiocb, struct socket *sock,
                                   struct msghdr *msg, int len, int flags);
-#else
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
 static int VSockVmciDgramSendmsg(struct kiocb *kiocb,
                                  struct socket *sock, struct msghdr *msg, size_t len);
 static int VSockVmciDgramRecvmsg(struct kiocb *kiocb, struct socket *sock,
@@ -259,6 +259,15 @@ static int VSockVmciStreamSendmsg(struct kiocb *kiocb,
                                  struct socket *sock, struct msghdr *msg, size_t len);
 static int VSockVmciStreamRecvmsg(struct kiocb *kiocb, struct socket *sock,
                                  struct msghdr *msg, size_t len, int flags);
+#else
+static int VSockVmciDgramSendmsg(struct socket *sock, struct msghdr *msg,
+                                 size_t len);
+static int VSockVmciDgramRecvmsg(struct socket *sock, struct msghdr *msg,
+                                 size_t len, int flags);
+static int VSockVmciStreamSendmsg(struct socket *sock, struct msghdr *msg,
+                                  size_t len);
+static int VSockVmciStreamRecvmsg(struct socket *sock, struct msghdr *msg,
+                                  size_t len, int flags);
 #endif
 
 static int VSockVmciCreate(
@@ -3738,10 +3747,15 @@ VSockVmciDgramSendmsg(struct kiocb *kiocb,          // UNUSED
                       struct socket *sock,          // IN: socket to send on
                       struct msghdr *msg,           // IN: message to send
                       int len)                      // IN: length of message
-#else
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
 static int
 VSockVmciDgramSendmsg(struct kiocb *kiocb,          // UNUSED
                       struct socket *sock,          // IN: socket to send on
+                      struct msghdr *msg,           // IN: message to send
+                      size_t len)                   // IN: length of message
+#else
+static int
+VSockVmciDgramSendmsg(struct socket *sock,          // IN: socket to send on
                       struct msghdr *msg,           // IN: message to send
                       size_t len)                   // IN: length of message
 #endif
@@ -4053,10 +4067,15 @@ VSockVmciStreamSendmsg(struct kiocb *kiocb,          // UNUSED
                        struct socket *sock,          // IN: socket to send on
                        struct msghdr *msg,           // IN: message to send
                        int len)                      // IN: length of message
-#else
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
 static int
 VSockVmciStreamSendmsg(struct kiocb *kiocb,          // UNUSED
                        struct socket *sock,          // IN: socket to send on
+                       struct msghdr *msg,           // IN: message to send
+                       size_t len)                   // IN: length of message
+#else
+static int
+VSockVmciStreamSendmsg(struct socket *sock,          // IN: socket to send on
                        struct msghdr *msg,           // IN: message to send
                        size_t len)                   // IN: length of message
 #endif
@@ -4254,10 +4273,16 @@ VSockVmciDgramRecvmsg(struct kiocb *kiocb,          // UNUSED
                       struct msghdr *msg,           // IN/OUT: message to receive into
                       int len,                      // IN: length of receive buffer
                       int flags)                    // IN: receive flags
-#else
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
 static int
 VSockVmciDgramRecvmsg(struct kiocb *kiocb,          // UNUSED
                       struct socket *sock,          // IN: socket to receive from
+                      struct msghdr *msg,           // IN/OUT: message to receive into
+                      size_t len,                   // IN: length of receive buffer
+                      int flags)                    // IN: receive flags
+#else
+static int
+VSockVmciDgramRecvmsg(struct socket *sock,          // IN: socket to receive from
                       struct msghdr *msg,           // IN/OUT: message to receive into
                       size_t len,                   // IN: length of receive buffer
                       int flags)                    // IN: receive flags
@@ -4373,10 +4398,16 @@ VSockVmciStreamRecvmsg(struct kiocb *kiocb,          // UNUSED
                        struct msghdr *msg,           // IN/OUT: message to receive into
                        int len,                      // IN: length of receive buffer
                        int flags)                    // IN: receive flags
-#else
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
 static int
 VSockVmciStreamRecvmsg(struct kiocb *kiocb,          // UNUSED
                        struct socket *sock,          // IN: socket to receive from
+                       struct msghdr *msg,           // IN/OUT: message to receive into
+                       size_t len,                   // IN: length of receive buffer
+                       int flags)                    // IN: receive flags
+#else
+static int
+VSockVmciStreamRecvmsg(struct socket *sock,          // IN: socket to receive from
                        struct msghdr *msg,           // IN/OUT: message to receive into
                        size_t len,                   // IN: length of receive buffer
                        int flags)                    // IN: receive flags
