@@ -2053,11 +2053,25 @@ LinuxDriver_Ioctl(struct inode *inode,
    }
 
    case IOCTL_VMX86_ALLOW_CORE_DUMP:
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
+      if (current_euid().val == current_uid().val &&
+         current_fsuid().val == current_uid().val &&
+          current_egid().val == current_gid().val &&
+         current_fsgid().val == current_gid().val) {
+#else
       if (current_euid() == current_uid() &&
 	  current_fsuid() == current_uid() &&
           current_egid() == current_gid() &&
 	  current_fsgid() == current_gid()) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 23) || defined(MMF_DUMPABLE)
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
+         /* copied from set_dumpable() in fs/exec.c */
+         unsigned long old, new;
+         do {
+            old = ACCESS_ONCE(current->mm->flags);
+            new = (old & ~MMF_DUMPABLE_MASK) | SUID_DUMP_USER;
+         } while (cmpxchg(&current->mm->flags, old, new) != old);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 23) || defined(MMF_DUMPABLE)
          /* Dump core, readable by user. */
          set_bit(MMF_DUMPABLE, &current->mm->flags);
          clear_bit(MMF_DUMP_SECURELY, &current->mm->flags);
