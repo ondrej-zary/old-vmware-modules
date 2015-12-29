@@ -27,8 +27,14 @@ unset product
 [ "$vmver" = "player$plreqver" ] && product="VMWare Player"
 [ -z "$product" ] && error "Sorry, this script is only for VMWare WorkStation $vmreqver or VMWare Player $plreqver"
 
-[ ! -d "$patchdir" ] && error "Patch directory '$patchdir' not found"
-[ `find "$patchdir" -prune -empty` ] && error "Patch directory '$patchdir' is empty"
+if [ -d .git ]; then
+	rm -rf "$patchdir"
+	mkdir -p "$patchdir"
+	git format-patch -o "$patchdir" 648fc5bb244bf6014401c7e9b03506eeee327ce3 vmblock-only vmci-only vmmon-only vmnet-only vsock-only
+else
+	[ ! -d "$patchdir" ] && error "Patch directory '$patchdir' not found"
+	[ `find "$patchdir" -prune -empty` ] && error "Patch directory '$patchdir' is empty"
+fi
 [ "`id -u`" != "0" ] && error "You must be root to run this script"
 [ -f "$ptoken" ] && error "$ptoken found. The sources are already patched. If you want to run patcher again, restore unpatched sources from backup first ($basedir-$vmver-*-backup)"
 [ ! -d "$basedir" ] && error "Source '$basedir' directory not found, reinstall $product"
