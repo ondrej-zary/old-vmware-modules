@@ -42,6 +42,7 @@
 #   include <string.h>
 #endif
 
+#include "compat_kernel.h"
 #include "vmware.h"
 #include "vmx86.h"
 #include "hostif.h"

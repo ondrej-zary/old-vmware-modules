@@ -85,7 +85,9 @@ ffs_x86_64(int x)
 #define ffs(x) ffs_x86_64(x)
 
 #elif defined MODULE
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 12, 0)
    #include <linux/bitops.h>
+#endif
 #elif defined __APPLE__ && defined KERNEL
    /* 
     * XXXMACOS An ugly hack to resolve redefinition of PAGE_ defines 

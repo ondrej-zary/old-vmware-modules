@@ -26,6 +26,7 @@
 #   include <string.h> // For strcmp().
 #endif
 
+#include "compat_kernel.h"
 #include "vmware.h"
 #include "vm_assert.h"
 #include "hostif.h"

@@ -44,14 +44,14 @@
 #endif
 
 #include "vmware.h"
+/* On Linux, must come before any inclusion of asm/page.h --hpreg */
+#include "hostKernel.h"
 #include "modulecall.h"
 #include "vmx86.h"
 #include "task.h"
 #include "vm_asm.h"
 #include "cpuid.h"
 #include "hostif.h"
-/* On Linux, must come before any inclusion of asm/page.h --hpreg */
-#include "hostKernel.h"
 #include "comport.h"
 #include "crossgdt.h"
 #include "x86vt.h"

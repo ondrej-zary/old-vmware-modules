@@ -86,6 +86,7 @@
 #   include <string.h>
 #endif
 
+#include "compat_kernel.h"
 #include "vmware.h"
 #include "hostif.h"
 
