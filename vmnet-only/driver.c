@@ -1131,9 +1131,13 @@ VNetFileOpUnlockedIoctl(struct file    *filp,  // IN:
    struct inode *inode = NULL;
    long err;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+   inode = file_inode(filp);
+#else
    if (filp && filp->f_dentry) {
       inode = filp->f_dentry->d_inode;
    }
+#endif
    compat_mutex_lock(&vnetMutex);
    err = VNetFileOpIoctl(inode, filp, iocmd, ioarg);
    compat_mutex_unlock(&vnetMutex);

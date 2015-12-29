@@ -547,7 +547,13 @@ VNetCopyDatagram(const struct sk_buff *skb,	// IN: skb to copy
       .iov_base = buf,
       .iov_len  = len,
    };
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+   struct iov_iter to;
+   iov_iter_init(&to, READ, &iov, 1, len);
+   return skb_copy_datagram_iter(skb, 0, &to, len);
+#else
    return skb_copy_datagram_iovec(skb, 0, &iov, len);
+#endif
 }
 
 
