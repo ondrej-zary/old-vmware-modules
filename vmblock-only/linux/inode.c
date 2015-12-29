@@ -143,7 +143,11 @@ InodeOpLookup(struct inode *dir,      // IN: parent directory's inode
    inode->i_size = INODE_TO_IINFO(inode)->nameLen;
    inode->i_version = 1;
    inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
+   inode->i_uid.val = inode->i_gid.val = 0;
+#else
    inode->i_uid = inode->i_gid = 0;
+#endif
    inode->i_op = &LinkInodeOps;
 
    d_add(dentry, inode);
