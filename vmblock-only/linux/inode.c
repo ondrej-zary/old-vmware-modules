@@ -42,7 +42,9 @@ static struct dentry *InodeOpLookup(struct inode *dir,
                                     struct dentry *dentry, struct nameidata *nd);
 #endif
 static int InodeOpReadlink(struct dentry *dentry, char __user *buffer, int buflen);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+static const char *InodeOpGetlink(struct dentry *dentry, struct inode *inode, struct delayed_call *dc);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)
 static const char *InodeOpFollowlink(struct dentry *dentry, void **cookie);
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 13)
 static void *InodeOpFollowlink(struct dentry *dentry, struct nameidata *nd);
@@ -57,7 +59,11 @@ struct inode_operations RootInodeOps = {
 
 static struct inode_operations LinkInodeOps = {
    .readlink    = InodeOpReadlink,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+   .get_link    = InodeOpGetlink,
+#else
    .follow_link = InodeOpFollowlink,
+#endif
 };
 
 
@@ -223,8 +229,15 @@ static void *
 #else
 static int
 #endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+InodeOpGetlink(struct dentry *dentry,  // IN : dentry of symlink
+#else
 InodeOpFollowlink(struct dentry *dentry,  // IN : dentry of symlink
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+		  struct inode *inode,
+		  struct delayed_call *dc)
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)
 		  void **cookie)          // OUT: stores result
 #else
                   struct nameidata *nd)   // OUT: stores result
@@ -245,7 +258,9 @@ InodeOpFollowlink(struct dentry *dentry,  // IN : dentry of symlink
       goto out;
    }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+   return (char *)(iinfo->name);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)
    return *cookie = (char *)(iinfo->name);
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 12, 0)
    nd_set_link(nd, iinfo->name);
