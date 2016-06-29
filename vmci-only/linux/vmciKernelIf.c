@@ -1473,7 +1473,11 @@ VMCIHost_GetUserMemory(PageStoreAttachInfo *attach,      // IN/OUT
       if (retval > 0) {
          int i;
          for (i = 0; i < retval; i++) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
+            put_page(attach->producePages[i]);
+#else
             page_cache_release(attach->producePages[i]);
+#endif
          }
       }
       err = VMCI_ERROR_NO_MEM;
@@ -1496,11 +1500,19 @@ VMCIHost_GetUserMemory(PageStoreAttachInfo *attach,      // IN/OUT
       Log("get_user_pages(consume) failed: %d\n", retval);
       if (retval > 0) {
          for (i = 0; i < retval; i++) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
+            put_page(attach->consumePages[i]);
+#else
             page_cache_release(attach->consumePages[i]);
+#endif
          }
       }
       for (i = 0; i < attach->numProducePages; i++) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
+         put_page(attach->producePages[i]);
+#else
          page_cache_release(attach->producePages[i]);
+#endif
       }
       err = VMCI_ERROR_NO_MEM;
    }
@@ -1633,14 +1645,22 @@ VMCIHost_ReleaseUserMemory(PageStoreAttachInfo *attach,      // IN/OUT
       ASSERT(attach->producePages[i]);
 
       set_page_dirty(attach->producePages[i]);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
+      put_page(attach->producePages[i]);
+#else
       page_cache_release(attach->producePages[i]);
+#endif
    }
 
    for (i = 0; i < attach->numConsumePages; i++) {
       ASSERT(attach->consumePages[i]);
 
       set_page_dirty(attach->consumePages[i]);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
+      put_page(attach->consumePages[i]);
+#else
       page_cache_release(attach->consumePages[i]);
+#endif
    }
 
    VMCI_FreeKernelMem(attach->producePages,
