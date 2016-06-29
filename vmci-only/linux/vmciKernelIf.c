@@ -1457,7 +1457,11 @@ VMCIHost_GetUserMemory(PageStoreAttachInfo *attach,      // IN/OUT
    }
 
    down_write(&current->mm->mmap_sem);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
+   retval = get_user_pages_remote(current,
+#else
    retval = get_user_pages(current,
+#endif
                            current->mm,
                            (VA)attach->produceBuffer,
                            attach->numProducePages,
@@ -1476,7 +1480,11 @@ VMCIHost_GetUserMemory(PageStoreAttachInfo *attach,      // IN/OUT
       goto out;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
+   retval = get_user_pages_remote(current,
+#else
    retval = get_user_pages(current,
+#endif
                            current->mm,
                            (VA)attach->consumeBuffer,
                            attach->numConsumePages,

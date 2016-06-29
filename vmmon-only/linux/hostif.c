@@ -1272,7 +1272,11 @@ HostIFGetUserPage(void *uvAddr,		// IN
    int retval;
       
    down_read(&current->mm->mmap_sem);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
+   retval = get_user_pages_remote(current, current->mm, (unsigned long)uvAddr, 
+#else
    retval = get_user_pages(current, current->mm, (unsigned long)uvAddr, 
+#endif
                            1, 0, 0, ppage, NULL);
    up_read(&current->mm->mmap_sem);
 
