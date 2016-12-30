@@ -1465,7 +1465,11 @@ VMCIHost_GetUserMemory(PageStoreAttachInfo *attach,      // IN/OUT
                            current->mm,
                            (VA)attach->produceBuffer,
                            attach->numProducePages,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
+                           FOLL_WRITE,
+#else
                            1, 0,
+#endif
                            attach->producePages,
                            NULL);
    if (retval < attach->numProducePages) {
@@ -1492,7 +1496,11 @@ VMCIHost_GetUserMemory(PageStoreAttachInfo *attach,      // IN/OUT
                            current->mm,
                            (VA)attach->consumeBuffer,
                            attach->numConsumePages,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
+                           FOLL_WRITE,
+#else
                            1, 0,
+#endif
                            attach->consumePages,
                            NULL);
    if (retval < attach->numConsumePages) {

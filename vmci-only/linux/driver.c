@@ -1333,7 +1333,11 @@ VMCIUserVALockPage(VA addr) // IN:
 #else
    retval = get_user_pages(current, current->mm, addr,
 #endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
+                           1, FOLL_WRITE, &page, NULL);
+#else
                            1, 1, 0, &page, NULL);
+#endif
    up_read(&current->mm->mmap_sem);
 
    if (retval != 1) {
