@@ -1896,7 +1896,11 @@ HostIF_EstimateLockedPageLimit(const VMDriver* vm,		  // IN
                               global_page_state(NR_SLAB_UNRECLAIMABLE) +
                               global_page_state(NR_UNEVICTABLE) +
                               reservedPages;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0)
+   unsigned int anonPages = global_page_state(NR_ANON_MAPPED);
+#else
    unsigned int anonPages = global_page_state(NR_ANON_PAGES); 
+#endif
    unsigned int swapPages = BYTES_2_PAGES(linuxState.swapSize);
 
    /*
