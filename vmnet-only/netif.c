@@ -588,7 +588,11 @@ VNetNetifStartXmit(struct sk_buff    *skb, // IN:
    VNetSend(&netIf->port.jack, skb);
 
    netIf->stats.tx_packets++;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0)
+   netif_trans_update(dev);
+#else
    dev->trans_start = jiffies;
+#endif
 
    return 0;
 }
