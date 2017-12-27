@@ -203,7 +203,11 @@ static int VSockVmciDgramConnect(struct socket *sock,
                                  struct sockaddr *addr, int addrLen, int flags);
 static int VSockVmciStreamConnect(struct socket *sock,
                                   struct sockaddr *addr, int addrLen, int flags);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+static int VSockVmciAccept(struct socket *sock, struct socket *newsock, int flags, bool kern);
+#else
 static int VSockVmciAccept(struct socket *sock, struct socket *newsock, int flags);
+#endif
 static int VSockVmciGetname(struct socket *sock,
                             struct sockaddr *addr, int *addrLen, int peer);
 static unsigned int VSockVmciPoll(struct file *file,
@@ -3308,7 +3312,12 @@ outWaitError:
 static int
 VSockVmciAccept(struct socket *sock,     // IN
                 struct socket *newsock,  // IN/OUT
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+                int flags,               // IN
+                bool kern)
+#else
                 int flags)               // IN
+#endif
 {
    struct sock *listener;
    int err;
