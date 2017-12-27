@@ -128,6 +128,9 @@ sys_ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
 #include "compat_workqueue.h"
 #include "compat_list.h"
 #include "compat_mutex.h"
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+#include "compat_sched.h"
+#endif
 
 #include "vmware.h"
 

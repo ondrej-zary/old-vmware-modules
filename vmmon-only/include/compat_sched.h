@@ -22,6 +22,11 @@
 
 #include <linux/sched.h>
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+#include <linux/sched/signal.h>
+#include <linux/sched/coredump.h>
+#endif
+
 /* CLONE_KERNEL available in 2.5.35 and higher. */
 #ifndef CLONE_KERNEL
 #define CLONE_KERNEL CLONE_FILES | CLONE_FS | CLONE_SIGHAND
