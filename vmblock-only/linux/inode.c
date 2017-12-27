@@ -150,7 +150,11 @@ InodeOpLookup(struct inode *dir,      // IN: parent directory's inode
    inode->i_mode = S_IFLNK | S_IRWXUGO;
    inode->i_size = INODE_TO_IINFO(inode)->nameLen;
    inode->i_version = 1;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+   inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
+#else
    inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
    inode->i_uid.val = inode->i_gid.val = 0;
 #else
