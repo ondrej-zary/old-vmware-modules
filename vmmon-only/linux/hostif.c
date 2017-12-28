@@ -3167,7 +3167,11 @@ HostIF_UserCallWait(VMDriver *vm,   // IN:
                     int timeoutms)  // IN:
 {
    if (vm->vmhost->replyWaiting[vcpuid]) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
+      wait_queue_entry_t wait;
+#else
       wait_queue_t wait;
+#endif
       wait_queue_head_t *q = &vm->vmhost->replyQueue[vcpuid];
 
       current->state = TASK_INTERRUPTIBLE;
