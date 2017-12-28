@@ -2100,7 +2100,11 @@ LinuxDriver_Ioctl(struct inode *inode,
          /* copied from set_dumpable() in fs/exec.c */
          unsigned long old, new;
          do {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+            old = READ_ONCE(current->mm->flags);
+#else
             old = ACCESS_ONCE(current->mm->flags);
+#endif
             new = (old & ~MMF_DUMPABLE_MASK) | SUID_DUMP_USER;
          } while (cmpxchg(&current->mm->flags, old, new) != old);
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 23) || defined(MMF_DUMPABLE)
