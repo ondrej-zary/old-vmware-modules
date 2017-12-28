@@ -115,6 +115,9 @@ PgtblPGD2PTELocked(compat_pgd_t *pgd,    // IN: PGD to start with
                    VA addr)              // IN: Address in the virtual address
                                          //     space of that process
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+   p4d_t *p4d;
+#endif
    compat_pud_t *pud;
    pmd_t *pmd;
    pte_t *pte;
@@ -123,7 +126,15 @@ PgtblPGD2PTELocked(compat_pgd_t *pgd,    // IN: PGD to start with
       return NULL;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+   p4d = p4d_offset(pgd, addr);
+   if (p4d_present(*p4d) == 0) {
+      return NULL;
+   }
+   pud = compat_pud_offset(p4d, addr);
+#else
    pud = compat_pud_offset(pgd, addr);
+#endif
    if (compat_pud_present(*pud) == 0) {
       return NULL;
    }
