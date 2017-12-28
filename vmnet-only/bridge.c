@@ -717,7 +717,11 @@ VNetBridgeReceiveFromVNet(VNetJack        *this, // IN: jack
 	 unsigned long flags;
 	 int i;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
+	 refcount_inc(&clone->users);
+#else
 	 atomic_inc(&clone->users);
+#endif
 
 	 clone->dev = dev;
 	 clone->protocol = eth_type_trans(clone, dev);
