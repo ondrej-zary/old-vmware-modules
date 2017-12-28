@@ -500,6 +500,24 @@ out_unlock:
    return verdict;
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
+static int vmnet_nf_register(struct net *net)
+{
+        return nf_register_net_hooks(net, vmnet_nf_ops,
+                                     ARRAY_SIZE(vmnet_nf_ops));
+}
+
+static void vmnet_nf_unregister(struct net *net)
+{
+        nf_unregister_net_hooks(net, vmnet_nf_ops,
+                                ARRAY_SIZE(vmnet_nf_ops));
+}
+
+static struct pernet_operations vmnet_net_ops = {
+        .init = vmnet_nf_register,
+        .exit = vmnet_nf_unregister,
+};
+#endif
 
 /*
  *----------------------------------------------------------------------
@@ -521,7 +539,9 @@ out_unlock:
 static int
 InsertHostFilterCallback(void)
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
    uint32 i;
+#endif
    int retval = 0;
 
    LOG(2, (KERN_INFO "vnet filter inserting callback\n"));
@@ -531,6 +551,14 @@ InsertHostFilterCallback(void)
       goto end;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
+   retval = register_pernet_subsys(&vmnet_net_ops);
+   if (retval) {
+      LOG(2, (KERN_INFO "vnet filter failed to register callback: %d\n",
+              retval));
+      goto end;
+   }
+#else
    /* Register netfilter hooks. */
    for (i = 0; i < ARRAY_SIZE(vmnet_nf_ops); i++) {
       if ((retval = nf_register_hook(&vmnet_nf_ops[i])) >= 0) {
@@ -544,6 +572,7 @@ InsertHostFilterCallback(void)
       }
       goto end;
    }
+#endif
    installedFilterCallback = TRUE;
    LOG(2, (KERN_INFO "Successfully set packet filter function\n"));
 
@@ -571,15 +600,21 @@ end:
 static void
 RemoveHostFilterCallback(void)
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
    int i;
+#endif
 
    LOG(2, (KERN_INFO "vnet filter removing callback\n"));
 
    if (installedFilterCallback) {
       LOG(2, (KERN_INFO "filter callback was installed: removing filter\n"));
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
+      unregister_pernet_subsys(&vmnet_net_ops);
+#else
       for (i = ARRAY_SIZE(vmnet_nf_ops) - 1; i >= 0; i--) {
          nf_unregister_hook(&vmnet_nf_ops[i]);
       }
+#endif
       installedFilterCallback = FALSE;
    }
    LOG(2, (KERN_INFO "vnet filter remove callback done\n"));
