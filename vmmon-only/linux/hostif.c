@@ -2100,7 +2100,11 @@ HostIFReadUptimeWork(unsigned long *j)  // OUT: current jiffies
  */
 
 static void
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+HostIFUptimeResyncMono(struct timer_list *t)
+#else
 HostIFUptimeResyncMono(unsigned long data)  // IN: ignored
+#endif
 {
    unsigned long jifs;
    uintptr_t flags;
@@ -2162,8 +2166,12 @@ HostIF_InitUptime(void)
                   -(tv.tv_usec * (UPTIME_FREQ / 1000000) + 
                     tv.tv_sec * UPTIME_FREQ));
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+   timer_setup(&uptimeState.timer, HostIFUptimeResyncMono, 0);
+#else
    init_timer(&uptimeState.timer);
    uptimeState.timer.function = HostIFUptimeResyncMono;
+#endif
    mod_timer(&uptimeState.timer, jiffies + HZ);
 }
 

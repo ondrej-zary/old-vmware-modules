@@ -198,7 +198,11 @@ static struct page *LinuxDriverNoPage(struct vm_area_struct *vma,
 #endif
 static int LinuxDriverMmap(struct file *filp, struct vm_area_struct *vma);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+static void LinuxDriverPollTimeout(struct timer_list *t);
+#else
 static void LinuxDriverPollTimeout(unsigned long clientData);
+#endif
 
 static struct vm_operations_struct vmuser_mops = {
 #ifdef VMW_NOPAGE_2624
@@ -366,7 +370,11 @@ unregister_ioctl32_handlers(void)
  */
 
 static void
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+LinuxDriverComputeTSCFreq(struct timer_list *t)
+#else
 LinuxDriverComputeTSCFreq(unsigned long data)
+#endif
 {
    Vmx86_GetkHzEstimate(&linuxState.startTime);
 }
@@ -408,9 +416,13 @@ init_module(void)
     */
 
    init_waitqueue_head(&linuxState.pollQueue);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+   timer_setup(&linuxState.pollTimer, LinuxDriverPollTimeout, 0);
+#else
    init_timer(&linuxState.pollTimer);
    linuxState.pollTimer.data = 0;
    linuxState.pollTimer.function = LinuxDriverPollTimeout;
+#endif
 
    linuxState.fastClockThread = NULL;
    linuxState.fastClockRate = 0;
@@ -489,9 +501,13 @@ init_module(void)
     */
 
    Vmx86_ReadTSCAndUptime(&linuxState.startTime);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+   timer_setup(&tscTimer, LinuxDriverComputeTSCFreq, 0);
+#else
    init_timer(&tscTimer);
    tscTimer.data = 0;
    tscTimer.function = LinuxDriverComputeTSCFreq;
+#endif
    tscTimer.expires = jiffies + 4 * HZ;
    add_timer(&tscTimer);
 
@@ -1077,7 +1093,11 @@ LinuxDriverPoll(struct file *filp,
  */
 
 static void
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+LinuxDriverPollTimeout(struct timer_list *t)
+#else
 LinuxDriverPollTimeout(unsigned long clientData)
+#endif
 {
    LinuxDriverWakeUp(FALSE);
 }
