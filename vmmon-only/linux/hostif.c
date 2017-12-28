@@ -1898,7 +1898,11 @@ HostIF_EstimateLockedPageLimit(const VMDriver* vm,		  // IN
     * available swap, anonymous pages become locked in memory as well. 
     */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
+   unsigned int lockedPages = global_zone_page_state(NR_PAGETABLE) +
+#else
    unsigned int lockedPages = global_page_state(NR_PAGETABLE) +
+#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
                               global_node_page_state(NR_SLAB_UNRECLAIMABLE) +
 #else
