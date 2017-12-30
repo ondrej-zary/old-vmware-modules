@@ -28,6 +28,9 @@
 #include <linux/fs.h>
 #include <linux/time.h>
 #include <linux/namei.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0)
+#include <linux/uaccess.h>
+#endif
 
 #include "vmblockInt.h"
 #include "filesystem.h"
@@ -166,6 +169,22 @@ InodeOpLookup(struct inode *dir,      // IN: parent directory's inode
    return NULL;
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0)
+int readlink_copy(char __user *buffer, int buflen, const char *link)
+{
+   int len = PTR_ERR(link);
+   if (IS_ERR(link))
+      goto out;
+
+   len = strlen(link);
+   if (len > (unsigned) buflen)
+      len = buflen;
+   if (copy_to_user(buffer, link, len))
+      len = -EFAULT;
+out:
+   return len;
+}
+#endif
 
 /*
  *----------------------------------------------------------------------------
