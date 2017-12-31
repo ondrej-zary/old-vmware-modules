@@ -269,12 +269,21 @@ InodeOpFollowlink(struct dentry *dentry,  // IN : dentry of symlink
    int ret = 0;
    VMBlockInodeInfo *iinfo;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+   if (!dentry && !inode) {
+#else
    if (!dentry) {
+#endif
       Warning("InodeOpReadlink: invalid args from kernel\n");
       ret = -EINVAL;
       goto out;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+   if (inode)
+      iinfo = INODE_TO_IINFO(inode);
+   else
+#endif
    iinfo = INODE_TO_IINFO(dentry->d_inode);
    if (!iinfo) {
       ret = -EINVAL;
