@@ -531,20 +531,22 @@ FsOpReadSuper(struct super_block *sb, // OUT: Superblock object
       return -EINVAL;
    }
 
+   rootInode->i_op = &RootInodeOps;
+   rootInode->i_fop = &RootFileOps;
+   rootInode->i_mode = S_IFDIR | S_IRUGO | S_IXUGO;
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0)
    rootDentry = d_make_root(rootInode);
 #else
    rootDentry = d_alloc_root(rootInode);
 #endif
    if (!rootDentry) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0)
       iput(rootInode);
+#endif
       return -ENOMEM;
    }
    sb->s_root = rootDentry;
-
-   rootInode->i_op = &RootInodeOps;
-   rootInode->i_fop = &RootFileOps;
-   rootInode->i_mode = S_IFDIR | S_IRUGO | S_IXUGO;
 
    LOG(4, "%s file system mounted\n", VMBLOCK_FS_NAME);
    return 0;
