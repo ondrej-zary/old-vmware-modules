@@ -209,7 +209,11 @@ static int VSockVmciAccept(struct socket *sock, struct socket *newsock, int flag
 static int VSockVmciAccept(struct socket *sock, struct socket *newsock, int flags);
 #endif
 static int VSockVmciGetname(struct socket *sock,
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 17, 0)
                             struct sockaddr *addr, int *addrLen, int peer);
+#else
+                            struct sockaddr *addr, int peer);
+#endif
 static unsigned int VSockVmciPoll(struct file *file,
                                   struct socket *sock, poll_table *wait);
 static int VSockVmciListen(struct socket *sock, int backlog);
@@ -3422,7 +3426,9 @@ out:
 static int
 VSockVmciGetname(struct socket *sock,    // IN
                  struct sockaddr *addr,  // OUT
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 17, 0)
                  int *addrLen,           // OUT
+#endif
                  int peer)               // IN
 {
    int err;
@@ -3458,7 +3464,9 @@ VSockVmciGetname(struct socket *sock,    // IN
     */
    ASSERT_ON_COMPILE(sizeof *vmciAddr <= 128);
    memcpy(addr, vmciAddr, sizeof *vmciAddr);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 17, 0)
    *addrLen = sizeof *vmciAddr;
+#endif
 
 out:
    release_sock(sk);
