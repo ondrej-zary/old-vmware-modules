@@ -4082,7 +4082,11 @@ HostIF_MapUserMem(VA addr,		// IN
    if (offset + size > PAGE_SIZE) {
       return NULL;
    }
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0) 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+   if (!access_ok(p, size)) {
+      return NULL;
+   }
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
    if (!access_ok(VERIFY_WRITE, p, size)) {
       return NULL;
    }

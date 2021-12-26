@@ -192,7 +192,9 @@ static INLINE int
 VNetUserIfInvalidPointer(VA uAddr,    // IN: user-provided pointer 
 			 size_t size) // IN: anticipated size of data
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+   return !access_ok((void *)uAddr, size);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
    return !access_ok(VERIFY_WRITE, (void *)uAddr, size);
 #else
    return verify_area(VERIFY_READ, (void *)uAddr, size) ||

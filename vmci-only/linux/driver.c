@@ -1293,7 +1293,9 @@ static INLINE Bool
 VMCIUserVAInvalidPointer(VA uva,      // IN:
                          size_t size) // IN:
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+   return !access_ok((void *)uva, size);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
    return !access_ok(VERIFY_WRITE, (void *)uva, size);
 #else
    return verify_area(VERIFY_READ, (void *)uva, size) ||
