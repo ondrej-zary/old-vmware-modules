@@ -275,7 +275,11 @@ IOMMU_RegisterDevice(VMLinux *vmLinux, // IN: virtual machine descriptor
       return -ENOMEM;
    }
    passthruDevice->vmLinux = vmLinux;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
+   passthruDevice->pdev = pci_get_domain_bus_and_slot(0, PCI_BDF_BUS(bdf),
+#else
    passthruDevice->pdev = pci_get_bus_and_slot(PCI_BDF_BUS(bdf),
+#endif
                                                PCI_BDF_SLOTFUNC(bdf));
    if (!passthruDevice->pdev) {
       printk(KERN_ERR "%s: No device found (bdf=%x).\n", __func__, bdf);
@@ -352,7 +356,11 @@ IOMMU_UnregisterDevice(uint32 bdf) // IN: Block/Device/Function
    struct PassthruDevice *passthruDevice;
    struct pci_dev *pdev;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
+   if (!(pdev = pci_get_domain_bus_and_slot(0, PCI_BDF_BUS(bdf),
+#else
    if (!(pdev = pci_get_bus_and_slot(PCI_BDF_BUS(bdf),
+#endif
                                      PCI_BDF_SLOTFUNC(bdf)))) {
       printk(KERN_ERR "%s: No device found (bdf=%x).\n", __func__, bdf);
       return -ENOENT;
