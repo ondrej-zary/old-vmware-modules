@@ -1874,7 +1874,9 @@ HostIF_EstimateLockedPageLimit(const VMDriver* vm,		  // IN
     * since at least 2.6.0.
     */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
    extern unsigned long totalram_pages;
+#endif
    unsigned int forHost;
 
    /* 
@@ -1882,7 +1884,11 @@ HostIF_EstimateLockedPageLimit(const VMDriver* vm,		  // IN
     * leave at least 128 MB to the host. 
     */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+   unsigned int totalPhysicalPages = totalram_pages();
+#else
    unsigned int totalPhysicalPages = totalram_pages;
+#endif
    unsigned int reservedPages = (128 * 1024 * 1024) / PAGE_SIZE;
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 28)
