@@ -2031,6 +2031,9 @@ HostIFReadUptimeWork(unsigned long *j)  // OUT: current jiffies
    uint32 version;
    unsigned long jifs, jifBase;
    unsigned attempts = 0;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+      struct timespec64 ts64;
+#endif
    /* Assert that HostIF_InitUptime has been called. */
    ASSERT(uptimeState.timer.function);
 
@@ -2042,7 +2045,13 @@ HostIFReadUptimeWork(unsigned long *j)  // OUT: current jiffies
       monoBase = uptimeState.monotimeBase;
    } while (!VersionedAtomic_EndTryRead(&uptimeState.version, version));
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+      ktime_get_real_ts64(&ts64);
+      tv.tv_sec = ts64.tv_sec;
+      tv.tv_usec = ts64.tv_nsec/1000;
+#else
    do_gettimeofday(&tv);
+#endif
    upBase = Atomic_Read64(&uptimeState.uptimeBase);
    
    monotime = (uint64)(jifs - jifBase) * (UPTIME_FREQ / HZ);
@@ -2159,9 +2168,18 @@ void
 HostIF_InitUptime(void)
 {
    struct timeval tv;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+      struct timespec64 ts64;
+#endif
 
    uptimeState.jiffiesBase = jiffies;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+   ktime_get_real_ts64(&ts64);
+   tv.tv_sec = ts64.tv_sec;
+   tv.tv_usec = ts64.tv_nsec/1000;
+#else
    do_gettimeofday(&tv);
+#endif
    Atomic_Write64(&uptimeState.uptimeBase, 
                   -(tv.tv_usec * (UPTIME_FREQ / 1000000) + 
                     tv.tv_sec * UPTIME_FREQ));
