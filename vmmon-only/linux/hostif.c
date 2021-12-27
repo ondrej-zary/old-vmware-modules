@@ -2686,7 +2686,11 @@ SetVMAPICPtr(VMDriver *vm, // IN/OUT: driver state
 {
    volatile void *hostapic;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+   hostapic = (volatile void *) ioremap(MPN_2_MA(mpn), PAGE_SIZE);
+#else
    hostapic = (volatile void *) ioremap_nocache(MPN_2_MA(mpn), PAGE_SIZE);
+#endif
    if (hostapic) {
       if ((APIC_VERSIONREG(hostapic) & 0xF0) == 0x10) {
 	 vm->hostAPIC = (volatile uint32 (*)[4]) hostapic;
