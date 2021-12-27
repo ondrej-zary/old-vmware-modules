@@ -146,6 +146,9 @@ sys_ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
 #include "vsock_version.h"
 #include "driverLog.h"
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+#define HAVE_UNLOCKED_IOCTL
+#endif
 
 #define VSOCK_INVALID_FAMILY        NPROTO
 #define VSOCK_AF_IS_REGISTERED(val) ((val) >= 0 && (val) < NPROTO)

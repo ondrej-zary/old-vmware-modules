@@ -55,6 +55,10 @@
 #include "compat_mutex.h"
 #include "vmnetInt.h"
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+#define HAVE_UNLOCKED_IOCTL
+#endif
+
 /*
  * Initialization and creation routines from other files.
  * Putting them here reduces the need for so many header files.

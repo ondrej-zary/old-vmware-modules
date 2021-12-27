@@ -78,6 +78,10 @@
 #include "vmmonInt.h"
 #include "versioned_atomic.h"
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+#define HAVE_UNLOCKED_IOCTL
+#endif
+
 /* 
  * Determine if we can use high resolution timers.
  */

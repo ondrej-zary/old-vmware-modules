@@ -39,6 +39,10 @@ sys_ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
 #   endif
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+#define HAVE_UNLOCKED_IOCTL
+#endif
+
 #include <linux/miscdevice.h>
 #include <linux/poll.h>
 #include <linux/smp.h>

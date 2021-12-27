@@ -121,6 +121,10 @@ sys_ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
 
 #include "vmmonInt.h"
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+#define HAVE_UNLOCKED_IOCTL
+#endif
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 4, 20)
 int errno;       // required for compat_exit()
 #endif
