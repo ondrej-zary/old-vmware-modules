@@ -360,8 +360,10 @@ static struct proto_ops vsockVmciDgramOps = {
    .ioctl      = sock_no_ioctl,
    .listen     = sock_no_listen,
    .shutdown   = VSockVmciShutdown,
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 9, 0)
    .setsockopt = sock_no_setsockopt,
    .getsockopt = sock_no_getsockopt,
+#endif
    .sendmsg    = VSockVmciDgramSendmsg,
    .recvmsg    = VSockVmciDgramRecvmsg,
    .mmap       = sock_no_mmap,
