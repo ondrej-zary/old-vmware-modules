@@ -228,7 +228,11 @@ typedef int VSockSetsockoptLenType;
 typedef unsigned int VSockSetsockoptLenType;
 #endif
 static int VSockVmciStreamSetsockopt(struct socket *sock, int level, int optname,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+                                     sockptr_t optval,
+#else
                                      char __user *optval,
+#endif
                                      VSockSetsockoptLenType optlen);
 static int VSockVmciStreamGetsockopt(struct socket *sock, int level, int optname,
                                      char __user *optval, int __user * optlen);
@@ -3917,7 +3921,11 @@ int
 VSockVmciStreamSetsockopt(struct socket *sock,              // IN/OUT
                           int level,                        // IN
                           int optname,                      // IN
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+                          sockptr_t optval,
+#else
                           char __user *optval,              // IN
+#endif
                           VSockSetsockoptLenType optlen)    // IN
 {
    int err;
@@ -3933,7 +3941,11 @@ VSockVmciStreamSetsockopt(struct socket *sock,              // IN/OUT
       return -EINVAL;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+   if (copy_from_sockptr(&val, optval, sizeof val) != 0) {
+#else
    if (copy_from_user(&val, optval, sizeof val) != 0) {
+#endif
       return -EFAULT;
    }
 
