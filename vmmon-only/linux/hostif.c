@@ -4077,7 +4077,7 @@ HostIF_SetFastClockRate(unsigned int rate) // IN: Frequency in Hz.
       }
    } else {
       if (linuxState.fastClockThread) {
-         force_sig(SIGKILL, linuxState.fastClockThread);
+         send_sig(SIGKILL, linuxState.fastClockThread, 1);
          compat_kthread_stop(linuxState.fastClockThread);
          linuxState.fastClockThread = NULL;
       }
