@@ -111,7 +111,11 @@ UserifLockPage(VA addr) // IN
    struct page *page = NULL;
    int retval;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+   mmap_read_lock(current->mm);
+#else
    down_read(&current->mm->mmap_sem);
+#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
    retval = get_user_pages_remote(current, current->mm, addr,
 #else
@@ -124,7 +128,11 @@ UserifLockPage(VA addr) // IN
 #else
 			   1, 1, 0, &page, NULL);
 #endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+   mmap_read_unlock(current->mm);
+#else
    up_read(&current->mm->mmap_sem);
+#endif
 
    if (retval != 1) {
       return NULL;

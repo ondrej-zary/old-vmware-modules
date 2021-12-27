@@ -552,28 +552,44 @@ HostIF_PollListUnlock(int callerID) // IN
 static INLINE void
 down_write_mmap(void)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+   mmap_write_lock(current->mm);
+#else
    down_write(&current->mm->mmap_sem);
+#endif
 }
 
 
 static INLINE void
 up_write_mmap(void)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+   mmap_write_unlock(current->mm);
+#else
    up_write(&current->mm->mmap_sem);
+#endif
 }
 
 
 static INLINE void
 down_read_mmap(void)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+   mmap_read_lock(current->mm);
+#else
    down_read(&current->mm->mmap_sem);
+#endif
 }
 
 
 static INLINE void
 up_read_mmap(void)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+   mmap_read_unlock(current->mm);
+#else
    up_read(&current->mm->mmap_sem);
+#endif
 }
 #else
 static INLINE void
@@ -1271,7 +1287,11 @@ HostIFGetUserPage(void *uvAddr,		// IN
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 4, 19)
    int retval;
       
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+   mmap_read_lock(current->mm);
+#else
    down_read(&current->mm->mmap_sem);
+#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
    retval = get_user_pages_remote(current, current->mm, (unsigned long)uvAddr, 
 #else
@@ -1284,7 +1304,11 @@ HostIFGetUserPage(void *uvAddr,		// IN
 #else
                            1, 0, 0, ppage, NULL);
 #endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+   mmap_read_unlock(current->mm);
+#else
    up_read(&current->mm->mmap_sem);
+#endif
 
    return retval != 1;
 #else

@@ -1456,7 +1456,11 @@ VMCIHost_GetUserMemory(PageStoreAttachInfo *attach,      // IN/OUT
       goto errorDealloc;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+   mmap_write_lock(current->mm);
+#else
    down_write(&current->mm->mmap_sem);
+#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
    retval = get_user_pages_remote(current,
 #else
@@ -1541,7 +1545,11 @@ VMCIHost_GetUserMemory(PageStoreAttachInfo *attach,      // IN/OUT
    }
 
 out:
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+   mmap_write_unlock(current->mm);
+#else
    up_write(&current->mm->mmap_sem);
+#endif
 
 errorDealloc:
    if (err < VMCI_SUCCESS) {
