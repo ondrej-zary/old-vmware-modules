@@ -185,7 +185,9 @@ static long LinuxDriver_UnlockedIoctl(struct file *filp,
 
 static int LinuxDriver_Close(struct inode *inode, struct file *filp);
 static unsigned int LinuxDriverPoll(struct file *file, poll_table *wait);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
+vm_fault_t LinuxDriverFault(struct vm_fault *fault);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
 static int LinuxDriverFault(struct vm_fault *fault);
 #elif defined(VMW_NOPAGE_2624)
 static int LinuxDriverFault(struct vm_area_struct *vma, struct vm_fault *fault);
@@ -1138,7 +1140,9 @@ LinuxDriverPollTimeout(unsigned long clientData)
  *-----------------------------------------------------------------------------
  */
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
+vm_fault_t LinuxDriverFault(struct vm_fault *fault)
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
 static int LinuxDriverFault(struct vm_fault *fault)
 #elif defined(VMW_NOPAGE_2624)
 static int LinuxDriverFault(struct vm_area_struct *vma, //IN
