@@ -2645,7 +2645,11 @@ isVAReadable(VA r)  // IN:
    int ret;
    
    old_fs = get_fs();
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
+   set_fs(KERNEL_DS);
+#else
    set_fs(get_ds());
+#endif
    r = APICR_TO_ADDR(r, APICR_VERSION);
    ret = HostIF_CopyFromUser(&dummy, (void*)r, sizeof(dummy));
    set_fs(old_fs);
@@ -2896,7 +2900,11 @@ HostIF_SemaphoreWait(VMDriver *vm,   // IN:
    }
 
    old_fs = get_fs();
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
+   set_fs(KERNEL_DS);
+#else
    set_fs(get_ds());
+#endif
 
    {
       compat_poll_wqueues table;
@@ -3023,7 +3031,11 @@ HostIF_SemaphoreSignal(uint32 *args)  // IN:
    }
 
    old_fs = get_fs();
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
+   set_fs(KERNEL_DS);
+#else
    set_fs(get_ds());
+#endif
 
    /*
     * Always write sizeof(uint64) bytes. This works fine for eventfd and
