@@ -1939,7 +1939,9 @@ HostIF_EstimateLockedPageLimit(const VMDriver* vm,		  // IN
 #else
    unsigned int lockedPages = global_page_state(NR_PAGETABLE) +
 #endif
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+                              global_node_page_state_pages(NR_SLAB_UNRECLAIMABLE_B) +
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
                               global_node_page_state(NR_SLAB_UNRECLAIMABLE) +
 #else
                               global_page_state(NR_SLAB_UNRECLAIMABLE) +
