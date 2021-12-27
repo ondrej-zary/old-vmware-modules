@@ -48,7 +48,11 @@
 static int VNetProcMakeEntryInt(VNetProcEntry *parent, char *name, int mode,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
                                 VNetProcEntry  **ret,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+                                const struct proc_ops *fops,
+#else
                                 const struct file_operations *fops,
+#endif
                                 void *data);
 #else
                                 VNetProcEntry **ret);
@@ -136,7 +140,11 @@ VNetProcMakeEntryInt(VNetProcEntry  *parent, // IN:
 		     int              mode,  // IN:
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
 		     VNetProcEntry  **ret,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+		     const struct proc_ops *fops,
+#else
 		     const struct file_operations *fops,
+#endif
 		     void *data)
 #else
 		     VNetProcEntry  **ret)   // OUT:
@@ -207,7 +215,11 @@ VNetProc_MakeEntry(char            *name,  // IN:
 		   int              mode,  // IN:
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
 		   VNetProcEntry  **ret,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+		   const struct proc_ops *fops,
+#else
 		   const struct file_operations *fops,
+#endif
 		   void *data)
 #else
 		   VNetProcEntry  **ret)   // OUT:

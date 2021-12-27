@@ -50,10 +50,16 @@ static int ControlFileOpRelease(struct inode *inode, struct file *file);
 
 
 static struct proc_dir_entry *controlProcDirEntry;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+struct proc_ops ControlFileOps = {
+   .proc_write   = ControlFileOpWrite,
+   .proc_release = ControlFileOpRelease,
+#else
 struct file_operations ControlFileOps = {
    .owner   = THIS_MODULE,
    .write   = ControlFileOpWrite,
    .release = ControlFileOpRelease,
+#endif
 };
 
 

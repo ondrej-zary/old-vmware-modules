@@ -528,11 +528,19 @@ static int proc_userif_open(struct inode *inode, struct file *file)
        return single_open(file, VNetUserIfProcShow, PDE_DATA(inode));
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+static const struct proc_ops proc_userif_fops = {
+       .proc_open           = proc_userif_open,
+       .proc_read           = seq_read,
+       .proc_lseek          = seq_lseek,
+       .proc_release        = seq_release,
+#else
 static const struct file_operations proc_userif_fops = {
        .open           = proc_userif_open,
        .read           = seq_read,
        .llseek         = seq_lseek,
        .release        = seq_release,
+#endif
 };
 #endif
 

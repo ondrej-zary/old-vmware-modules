@@ -281,11 +281,19 @@ static int proc_bridge_open(struct inode *inode, struct file *file)
        return single_open(file, VNetBridgeProcShow, PDE_DATA(inode));
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+static const struct proc_ops proc_bridge_fops = {
+       .proc_open           = proc_bridge_open,
+       .proc_read           = seq_read,
+       .proc_lseek          = seq_lseek,
+       .proc_release        = seq_release,
+#else
 static const struct file_operations proc_bridge_fops = {
        .open           = proc_bridge_open,
        .read           = seq_read,
        .llseek         = seq_lseek,
        .release        = seq_release,
+#endif
 };
 #endif
 

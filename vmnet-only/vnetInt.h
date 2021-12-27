@@ -29,6 +29,9 @@
 #include <asm/page.h>
 
 #include "compat_mutex.h"
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+#include <linux/proc_fs.h>
+#endif
 
 #define INLINE inline
 
@@ -172,7 +175,11 @@ void VNetSend(const VNetJack *jack, struct sk_buff *skb);
 int VNetProc_MakeEntry(char *name, int mode,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
                        VNetProcEntry **ret,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+		       const struct proc_ops *fops,
+#else
 		       const struct file_operations *fops,
+#endif
 		       void *data);
 #else
                        VNetProcEntry **ret);
