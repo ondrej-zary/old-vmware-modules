@@ -1296,7 +1296,9 @@ HostIFGetUserPage(void *uvAddr,		// IN
 #else
    down_read(&current->mm->mmap_sem);
 #endif
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+   retval = get_user_pages_remote(current->mm, (unsigned long)uvAddr,
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
    retval = get_user_pages_remote(current, current->mm, (unsigned long)uvAddr, 
 #else
    retval = get_user_pages(current, current->mm, (unsigned long)uvAddr, 
