@@ -935,13 +935,14 @@ void
 LinuxDriverWakeUp(Bool selective)
 {
    if (selective && linuxState.pollList != NULL) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+      struct timespec64 ts64;
+#else
       struct timeval tv;
+#endif
       VmTimeType now;
       VMLinux *p;
       VMLinux *next;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-      struct timespec64 ts64;
-#endif
 
       //compat_preempt_disable();
 #ifdef POLLSPINLOCK
@@ -952,12 +953,11 @@ LinuxDriverWakeUp(Bool selective)
 #endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
       ktime_get_real_ts64(&ts64);
-      tv.tv_sec = ts64.tv_sec;
-      tv.tv_usec = ts64.tv_nsec/1000;
+      now = ts64.tv_sec * 1000000ULL + ts64.tv_nsec / 1000;
 #else
       do_gettimeofday(&tv);
-#endif
       now = tv.tv_sec * 1000000ULL + tv.tv_usec;
+#endif
       for (p = linuxState.pollList; p != NULL; p = next) {
 	 next = p->pollForw;
 	 if (p->pollTime <= now) {
@@ -1041,18 +1041,20 @@ LinuxDriverPoll(struct file *filp,
 	 }
       } else {
          if (linuxState.fastClockThread && vmLinux->pollTimeoutPtr != NULL) {
-	    struct timeval tv;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-            struct timespec64 ts64;
-            ktime_get_real_ts64(&ts64);
-            tv.tv_sec = ts64.tv_sec;
-            tv.tv_usec = ts64.tv_nsec/1000;
+	    struct timespec64 ts64;
+	    ktime_get_real_ts64(&ts64);
 #else
+	    struct timeval tv;
 	    do_gettimeofday(&tv);
 #endif
 	    poll_wait(filp, &vmLinux->pollQueue, wait);
 	    vmLinux->pollTime = *vmLinux->pollTimeoutPtr +
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+	                        ts64.tv_sec * 1000000ULL + ts64.tv_nsec / 1000;
+#else
 	                        tv.tv_sec * 1000000ULL + tv.tv_usec;
+#endif
 	    if (vmLinux->pollBack == NULL) {
 #ifdef POLLSPINLOCK
 	       unsigned long flags;

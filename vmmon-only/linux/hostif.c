@@ -2031,15 +2031,16 @@ HostIF_WaitForFreePages(unsigned int timeoutMs)  // IN:
 static uint64
 HostIFReadUptimeWork(unsigned long *j)  // OUT: current jiffies 
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+   struct timespec64 ts64;
+#else
    struct timeval tv;
+#endif
    uint64 monotime, uptime, upBase, newUpBase, monoBase;
    int64 diff;
    uint32 version;
    unsigned long jifs, jifBase;
    unsigned attempts = 0;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-      struct timespec64 ts64;
-#endif
    /* Assert that HostIF_InitUptime has been called. */
    ASSERT(uptimeState.timer.function);
 
@@ -2052,9 +2053,7 @@ HostIFReadUptimeWork(unsigned long *j)  // OUT: current jiffies
    } while (!VersionedAtomic_EndTryRead(&uptimeState.version, version));
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-      ktime_get_real_ts64(&ts64);
-      tv.tv_sec = ts64.tv_sec;
-      tv.tv_usec = ts64.tv_nsec/1000;
+   ktime_get_real_ts64(&ts64);
 #else
    do_gettimeofday(&tv);
 #endif
@@ -2063,7 +2062,11 @@ HostIFReadUptimeWork(unsigned long *j)  // OUT: current jiffies
    monotime = (uint64)(jifs - jifBase) * (UPTIME_FREQ / HZ);
    monotime += monoBase;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+   uptime = ts64.tv_nsec / 1000 * (UPTIME_FREQ / 1000000) + ts64.tv_sec * UPTIME_FREQ;
+#else
    uptime = tv.tv_usec * (UPTIME_FREQ / 1000000) + tv.tv_sec * UPTIME_FREQ;
+#endif
    uptime += upBase;
    
    /* 
@@ -2173,22 +2176,24 @@ HostIFUptimeResyncMono(unsigned long data)  // IN: ignored
 void
 HostIF_InitUptime(void)
 {
-   struct timeval tv;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-      struct timespec64 ts64;
+   struct timespec64 ts64;
+#else
+   struct timeval tv;
 #endif
 
    uptimeState.jiffiesBase = jiffies;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
    ktime_get_real_ts64(&ts64);
-   tv.tv_sec = ts64.tv_sec;
-   tv.tv_usec = ts64.tv_nsec/1000;
+   Atomic_Write64(&uptimeState.uptimeBase,
+                  -(ts64.tv_nsec / 1000 * (UPTIME_FREQ / 1000000) +
+                    ts64.tv_sec * UPTIME_FREQ));
 #else
    do_gettimeofday(&tv);
-#endif
    Atomic_Write64(&uptimeState.uptimeBase, 
                   -(tv.tv_usec * (UPTIME_FREQ / 1000000) + 
                     tv.tv_sec * UPTIME_FREQ));
+#endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
    timer_setup(&uptimeState.timer, HostIFUptimeResyncMono, 0);
