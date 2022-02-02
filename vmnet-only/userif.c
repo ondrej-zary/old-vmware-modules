@@ -620,7 +620,9 @@ VNetCsumCopyDatagram(const struct sk_buff *skb,	// IN: skb to copy
 		     char *buf)			// OUT: where to copy data
 {
    unsigned int csum;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)
    int err = 0;
+#endif
    int len = skb_headlen(skb) - offset;
    char *curr = buf;
    const skb_frag_t *frag;
@@ -633,10 +635,16 @@ VNetCsumCopyDatagram(const struct sk_buff *skb,	// IN: skb to copy
       return -EINVAL;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+   csum = csum_and_copy_to_user(skb->data + offset, curr, len);
+   if (!csum)
+      return -EFAULT;
+#else
    csum = csum_and_copy_to_user(skb->data + offset, curr, len, 0, &err);
    if (err) {
       return err;
    }
+#endif
    curr += len;
 
    for (frag = skb_shinfo(skb)->frags;
@@ -655,7 +663,10 @@ VNetCsumCopyDatagram(const struct sk_buff *skb,	// IN: skb to copy
 #else
 	 vaddr = kmap(frag->page);
 #endif
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+	 tmpCsum = csum_and_copy_to_user(vaddr + frag->bv_offset,
+					 curr, skb_frag_size(frag));
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
 	 tmpCsum = csum_and_copy_to_user(vaddr + frag->bv_offset,
 					 curr, skb_frag_size(frag), 0, &err);
 #else
@@ -667,9 +678,14 @@ VNetCsumCopyDatagram(const struct sk_buff *skb,	// IN: skb to copy
 #else
 	 kunmap(frag->page);
 #endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+	 if (!tmpCsum)
+	    return -EFAULT;
+#else
 	 if (err) {
 	    return err;
 	 }
+#endif
 	 csum = csum_block_add(csum, tmpCsum, curr - buf);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
 	 curr += skb_frag_size(frag);
