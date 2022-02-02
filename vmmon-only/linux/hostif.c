@@ -60,6 +60,9 @@
 #include "compat_kernel.h"
 #include "compat_timer.h"
 #include "compat_kthread.h"
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+#include <linux/eventfd.h>
+#endif
 
 #include "vmware.h"
 #include "x86apic.h"
@@ -2677,10 +2680,15 @@ GetMSR(int index)  // IN:
 static Bool
 isVAReadable(VA r)  // IN:
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)
    mm_segment_t old_fs;
+#endif
    uint32 dummy;
    int ret;
    
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+   ret = copy_from_kernel_nofault(&dummy, (const void *)r, sizeof(dummy));
+#else
    old_fs = get_fs();
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
    set_fs(KERNEL_DS);
@@ -2690,6 +2698,7 @@ isVAReadable(VA r)  // IN:
    r = APICR_TO_ADDR(r, APICR_VERSION);
    ret = HostIF_CopyFromUser(&dummy, (void*)r, sizeof(dummy));
    set_fs(old_fs);
+#endif
 
    return ret == 0;
 }
@@ -2929,7 +2938,9 @@ HostIF_SemaphoreWait(VMDriver *vm,   // IN:
                      uint32 *args)   // IN:
 {
    struct file *file;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)
    mm_segment_t old_fs;
+#endif
    int res;
    int waitFD = args[0];
    int timeoutms = args[2];
@@ -2940,11 +2951,13 @@ HostIF_SemaphoreWait(VMDriver *vm,   // IN:
       return MX_WAITERROR;
    }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)
    old_fs = get_fs();
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
    set_fs(KERNEL_DS);
 #else
    set_fs(get_ds());
+#endif
 #endif
 
    {
@@ -2970,7 +2983,11 @@ HostIF_SemaphoreWait(VMDriver *vm,   // IN:
     * reading no bytes (EAGAIN - non blocking fd) or sizeof(uint64).
     */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+   res = kernel_read(file, &value, sizeof value, &file->f_pos);
+#else
    res = file->f_op->read(file, (char *) &value, sizeof value, &file->f_pos);
+#endif
 
    if (res == sizeof value) {
       res = MX_WAITNORMAL;
@@ -2980,7 +2997,9 @@ HostIF_SemaphoreWait(VMDriver *vm,   // IN:
       }
    }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)
    set_fs(old_fs);
+#endif
    compat_fput(file);
 
    /*
@@ -3061,7 +3080,11 @@ int
 HostIF_SemaphoreSignal(uint32 *args)  // IN:
 {
    struct file *file;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+   struct eventfd_ctx *eventfd;
+#else
    mm_segment_t old_fs;
+#endif
    int res;
    int signalFD = args[1];
    uint64 value = 1;  // make an eventfd happy should it be there
@@ -3071,11 +3094,24 @@ HostIF_SemaphoreSignal(uint32 *args)  // IN:
       return MX_WAITERROR;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+   /*
+    * If it's eventfd, use specific eventfd interface as kernel writes
+    * to eventfd may not be allowed in kernel 5.10 and later.
+    */
+   eventfd = eventfd_ctx_fileget(file);
+   if (!IS_ERR(eventfd)) {
+      eventfd_signal(eventfd, 1);
+      fput(file);
+      return MX_WAITNORMAL;
+   }
+#else
    old_fs = get_fs();
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
    set_fs(KERNEL_DS);
 #else
    set_fs(get_ds());
+#endif
 #endif
 
    /*
@@ -3084,13 +3120,19 @@ HostIF_SemaphoreSignal(uint32 *args)  // IN:
     * it be present.
     */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+   res = kernel_write(file, &value, sizeof value, &file->f_pos);
+#else
    res = file->f_op->write(file, (char *) &value, sizeof value, &file->f_pos);
+#endif
 
    if (res == sizeof value) {
       res = MX_WAITNORMAL;
    }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)
    set_fs(old_fs);
+#endif
    compat_fput(file);
 
    /*
@@ -3918,7 +3960,11 @@ HostIFStartTimer(Bool rateChanged,  //IN: Did rate change?
          return -1;
       }
    }
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+   res = kernel_read(filp, &buf, sizeof(buf), &pos);
+#else
    res = filp->f_op->read(filp, (void *) &buf, sizeof(buf), &pos);
+#endif
    if (res <= 0) {
       if (res != -ERESTARTSYS) {
          Log("/dev/rtc read failed: %d\n", res);
@@ -3957,12 +4003,16 @@ HostIFFastClockThread(void *data)  // IN:
 {
    struct file *filp = (struct file *) data;
    int res;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)
    mm_segment_t oldFS;
+#endif
    unsigned int rate = 0;
    unsigned int prevRate = 0;
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)
    oldFS = get_fs();
    set_fs(KERNEL_DS);
+#endif
    compat_allow_signal(SIGKILL);
    compat_set_user_nice(current, linuxState.fastClockPriority);
 
@@ -3997,7 +4047,9 @@ HostIFFastClockThread(void *data)  // IN:
  out:
    close_rtc(filp, current->files);
    LinuxDriverWakeUp(TRUE);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)
    set_fs(oldFS);
+#endif
 
    /*
     * Do not exit thread until we are told to do so.
