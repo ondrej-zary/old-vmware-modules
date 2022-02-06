@@ -372,7 +372,11 @@ VMCIHost_WaitForCallLocked(VMCIHost *hostContext, // IN
     */      
 
    add_wait_queue(&hostContext->waitQueue, &wait);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 14, 0)
+   set_current_state(TASK_INTERRUPTIBLE);
+#else
    current->state = TASK_INTERRUPTIBLE;
+#endif
 
    if (useBH) {
       VMCI_ReleaseLock_BH(lock, *flags);
@@ -388,7 +392,11 @@ VMCIHost_WaitForCallLocked(VMCIHost *hostContext, // IN
       VMCI_GrabLock(lock, flags);
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 14, 0)
+   set_current_state(TASK_RUNNING);
+#else
    current->state = TASK_RUNNING;
+#endif
 
    remove_wait_queue(&hostContext->waitQueue, &wait);
 
@@ -741,7 +749,11 @@ VMCI_WaitOnEventInterruptible(VMCIEvent *event,              // IN:
    }
 
    add_wait_queue(event, &wait);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 14, 0)
+   set_current_state(TASK_INTERRUPTIBLE);
+#else
    current->state = TASK_INTERRUPTIBLE;
+#endif
 
    /* 
     * Release the lock or other primitive that makes it possible for us to 
@@ -753,7 +765,11 @@ VMCI_WaitOnEventInterruptible(VMCIEvent *event,              // IN:
    releaseCB(clientData);
    
    schedule();
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 14, 0)
+   set_current_state(TASK_RUNNING);
+#else
    current->state = TASK_RUNNING;
+#endif
    remove_wait_queue(event, &wait);
 
    return signal_pending(current);

@@ -2966,14 +2966,22 @@ HostIF_SemaphoreWait(VMDriver *vm,   // IN:
       unsigned int mask;
       
       compat_poll_initwait(wait, &table);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 14, 0)
+      set_current_state(TASK_INTERRUPTIBLE);
+#else
       current->state = TASK_INTERRUPTIBLE;
+#endif
       mask = file->f_op->poll(file, wait);
       if (!(mask & (POLLIN | POLLERR | POLLHUP))) {
 	 vm->vmhost->vcpuSemaTask[vcpuid] = current;
 	 schedule_timeout(timeoutms * HZ / 1000);  // convert to Hz
 	 vm->vmhost->vcpuSemaTask[vcpuid] = NULL;
       }
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 14, 0)
+      set_current_state(TASK_RUNNING);
+#else
       current->state = TASK_RUNNING;
+#endif
       compat_poll_freewait(wait, &table);
    }
 
@@ -3050,7 +3058,11 @@ HostIF_SemaphoreForceWakeup(VMDriver *vm,   // IN:
 {
    struct task_struct *t = vm->vmhost->vcpuSemaTask[vcpuid];
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 14, 0)
+   if (t && (READ_ONCE(t->__state) & TASK_INTERRUPTIBLE)) {
+#else
    if (t && (t->state & TASK_INTERRUPTIBLE)) {
+#endif
       wake_up_process(t);
    }
 }
@@ -3313,13 +3325,21 @@ HostIF_UserCallWait(VMDriver *vm,   // IN:
 #endif
       wait_queue_head_t *q = &vm->vmhost->replyQueue[vcpuid];
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 14, 0)
+      set_current_state(TASK_INTERRUPTIBLE);
+#else
       current->state = TASK_INTERRUPTIBLE;
+#endif
       init_waitqueue_entry(&wait, current);
       add_wait_queue(q, &wait);
       if (vm->vmhost->replyWaiting[vcpuid]) {
 	 schedule_timeout(timeoutms * HZ / 1000); // convert to Hz
       }
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 14, 0)
+      set_current_state(TASK_RUNNING);
+#else
       current->state = TASK_RUNNING;
+#endif
       remove_wait_queue(q, &wait);
    }
 
