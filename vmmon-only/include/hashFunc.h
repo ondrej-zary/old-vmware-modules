@@ -36,6 +36,7 @@
 
 #include "vm_basic_types.h"
 #include "vm_basic_defs.h"
+#include "compat_version.h"
 
 /*
  * operations
@@ -222,6 +223,9 @@ static INLINE ub8 hash2(register ub8 *k,       /* the key */
   {
     /* c is reserved for the length */
   case  2: b+=k[1];
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 14, 0)
+    fallthrough;
+#endif
   case  1: a+=k[0];
     /* case 0: nothing left to add */
   }

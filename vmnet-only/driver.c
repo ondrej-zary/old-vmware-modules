@@ -1089,6 +1089,9 @@ VNetFileOpIoctl(struct inode   *inode, // IN:
 	 /* Should we require verFromUser == VNET_API_VERSION? */
       }
       /* fall thru */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 14, 0)
+      fallthrough;
+#endif
    case SIOCGETAPIVERSION:
       {
 	 uint32 verToUser = VNET_API_VERSION;

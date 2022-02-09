@@ -535,6 +535,9 @@ LinuxDriver_Ioctl(struct inode *inode,
       vmciLinux->userVersion = verFromUser;
    }
       /* Fall through. */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 14, 0)
+      fallthrough;
+#endif
    case IOCTL_VMCI_VERSION:
       /*
        * The basic logic here is:
