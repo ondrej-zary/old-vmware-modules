@@ -179,7 +179,11 @@ VNetNetIfSetup(struct net_device *dev)  // IN:
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
 static int proc_netif_open(struct inode *inode, struct file *file)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
+       return single_open(file, VNetNetIfProcShow, pde_data(inode));
+#else
        return single_open(file, VNetNetIfProcShow, PDE_DATA(inode));
+#endif
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)

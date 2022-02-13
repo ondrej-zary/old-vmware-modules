@@ -535,7 +535,11 @@ VNetUserIfProcRead(char    *page,  // IN/OUT: buffer to write into
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
 static int proc_userif_open(struct inode *inode, struct file *file)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
+       return single_open(file, VNetUserIfProcShow, pde_data(inode));
+#else
        return single_open(file, VNetUserIfProcShow, PDE_DATA(inode));
+#endif
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)

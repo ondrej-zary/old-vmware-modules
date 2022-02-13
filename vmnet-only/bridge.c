@@ -278,7 +278,11 @@ VNetBridgeDevCompatible(VNetBridge *bridge,      // IN: Bridge
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
 static int proc_bridge_open(struct inode *inode, struct file *file)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
+       return single_open(file, VNetBridgeProcShow, pde_data(inode));
+#else
        return single_open(file, VNetBridgeProcShow, PDE_DATA(inode));
+#endif
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)

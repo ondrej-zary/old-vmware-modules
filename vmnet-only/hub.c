@@ -251,7 +251,11 @@ VNetHub_AllocPvn(uint8 id[]) // IN: the PVN ID to alloc on
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
 static int proc_hub_open(struct inode *inode, struct file *file)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
+       return single_open(file, VNetHubProcShow, pde_data(inode));
+#else
        return single_open(file, VNetHubProcShow, PDE_DATA(inode));
+#endif
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
