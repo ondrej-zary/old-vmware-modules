@@ -354,7 +354,11 @@ VNetNetIf_Create(char *devName,  // IN:
 #endif
    netIf->dev = dev;
    
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
+   dev_addr_set(dev, netIf->port.paddr);
+#else
    memcpy(dev->dev_addr, netIf->port.paddr, sizeof netIf->port.paddr);
+#endif
    
    if (register_netdev(dev) != 0) {
       LOG(0, (KERN_NOTICE "%s: could not register network device\n", devName));
@@ -638,7 +642,11 @@ VNetNetifSetMAC(struct net_device *dev, // IN:
    }
    netIf = VNetNetIfNetDeviceToNetIf(dev);
    memcpy(netIf->port.paddr, addr->sa_data, dev->addr_len);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
+   dev_addr_set(dev, addr->sa_data);
+#else
    memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
+#endif
    return 0;
 }
 

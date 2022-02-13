@@ -34,6 +34,7 @@
 #else /* _WIN32 */
 
 #include "vm_basic_types.h"
+#include "compat_version.h"
 
 /* linux header files include too much garbage, so just define if needed */
 #ifndef ETH_ALEN
@@ -71,7 +72,11 @@ Bool BridgeIPv6MatchAddrMAC(const IPv6Addr *addr, const uint8 *mac);
 void SMACINT
 SMAC_InitState(struct SMACState **ptr);           // IN: state to alloc/init
 void SMACINT
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
+SMAC_SetMac(struct SMACState *state, const uint8 *mac); // IN: state, and host MAC
+#else
 SMAC_SetMac(struct SMACState *state, uint8 *mac); // IN: state, and host MAC
+#endif
 void SMACINT
 SMAC_CleanupState(struct SMACState **ptr);        // IN: state to cleanup/dealloc
 

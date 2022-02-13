@@ -4067,7 +4067,11 @@ SMAC_InitState(SMACState **ptr) // OUT: pointer to alloced/inited state
 
 void SMACINT
 SMAC_SetMac(SMACState *state,  // IN: state to update
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
+	    const uint8 *mac)        // IN: pointer to host adapter's MAC
+#else
 	    uint8 *mac)        // IN: pointer to host adapter's MAC
+#endif
 {
    VNETKdPrintCall(("SMAC_SetMac"));
    ASSERT(state);
