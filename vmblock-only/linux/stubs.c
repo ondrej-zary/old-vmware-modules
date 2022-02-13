@@ -23,7 +23,11 @@
  *      Common stubs.
  */
 
+#include "compat_version.h"
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0)
 #include <stdarg.h>
+#endif
 
 #include "os.h"
 
