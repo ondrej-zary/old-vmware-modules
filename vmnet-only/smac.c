@@ -247,7 +247,7 @@ extern int VNetSnprintf(char *str, size_t size, const char *format, ...);
 #undef NTOHS
 #endif /* __APPLE__ */
 
-#define HTONL(i) (((uint32)i)>>24 | (i)<<24 | ((i)&0x00ff0000)>>8 | \
+#define HTONL(i) (((uint32)i)>>24 | ((i)&0x000000ff)<<24 | ((i)&0x00ff0000)>>8 | \
                  ((i)&0x0000ff00)<<8)
 #define NTOHL(i) HTONL(i)
 #define HTONS(i) (((uint16)i)>>8 | (i)<<8)
