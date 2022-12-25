@@ -498,11 +498,8 @@ FIELDDEF( 8A, EDX, AMD,     4, 28, SVMEDX_RSVD,         NO,  MASK,   0, FALSE)
  * e.g. - CPUID_FEATURE_COMMON_ID1EDX_FPU     = 0x1
  *      - CPUID_COMMON_ID88EAX_VIRTBITS_MASK  = 0xff00
  *      - CPUID_COMMON_ID88EAX_VIRTBITS_SHIFT = 8
- *
- * Note: The FEATURE/MASK definitions must use some gymnastics to get
- * around a warning when shifting left by 32.
  */
-#define VMW_BIT_MASK(shift)  (((1 << (shift - 1)) << 1) - 1)
+#define VMW_BIT_MASK(shift)  (0xffffffffu >> (32 - shift))
 
 #define FIELDDEF(lvl, reg, vend, bitpos, size, name, s, m, v, c3)       \
    CPUID_##vend##_ID##lvl##reg##_##name##_SHIFT = bitpos,               \
