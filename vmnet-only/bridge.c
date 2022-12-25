@@ -791,7 +791,11 @@ VNetBridgeReceiveFromVNet(VNetJack        *this, // IN: jack
           * not do it, or netif_rx_ni() will deadlock on the cli() lock --hpreg
           */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0)
+	 netif_rx(clone);
+#else
 	 netif_rx_ni(clone);
+#endif
 #	 if LOGLEVEL >= 4
 	 do_gettimeofday(&vnetTime);
 #	 endif
