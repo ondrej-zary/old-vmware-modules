@@ -113,14 +113,14 @@ IOMMU_SetupMMU(VMLinux *vmLinux,               // IN: virtual machine descriptor
 
       if (iommu_iova_to_phys(vmLinux->iommuDomain, PPN_2_PA(ppn)) != 0) {
          printk(KERN_WARNING
-                "%s: Mapping for IOVA %lx is already exists, skipping...\n",
+                "%s: Mapping for IOVA %llx is already exists, skipping...\n",
                 __func__, PPN_2_PA(ppn));
          continue; // This page is already mapped
       }
       if (currentPage != userPage) {
          if (copy_from_user(data, (void *)(userPage << PAGE_SHIFT),
                             PAGE_SIZE) != 0) {
-            printk(KERN_ERR "%s: could not get %luth page of IOMMU map "
+            printk(KERN_ERR "%s: could not get %lluth page of IOMMU map "
                    "from user space.\n", __func__, userPage);
             status = -EFAULT;
             goto out;
