@@ -139,7 +139,7 @@ VNetHubFindHubByID(uint8 idNum[VNET_PVN_ID_LEN]) // IN: PVN id to find
 {
    VNetHub *currHub = vnetHub;
    while (currHub && (currHub->hubType != HUB_TYPE_PVN ||
-		      memcmp(idNum, currHub->id.pvnID, sizeof idNum))) {
+		      memcmp(idNum, currHub->id.pvnID, VNET_PVN_ID_LEN))) {
       currHub = currHub->next;
    }
    return currHub;
@@ -243,7 +243,7 @@ VNetHub_AllocVnet(int hubNum) // IN: the vnet number to alloc on
  */
 
 VNetJack *
-VNetHub_AllocPvn(uint8 id[]) // IN: the PVN ID to alloc on
+VNetHub_AllocPvn(uint8 id[VNET_PVN_ID_LEN]) // IN: the PVN ID to alloc on
 {
    return VNetHubAlloc(TRUE, -1, id);
 }
@@ -293,7 +293,7 @@ static const struct file_operations proc_hub_fops = {
 VNetJack *
 VNetHubAlloc(Bool allocPvn, // IN: TRUE for PVN, FALSE for vnet
 	     int hubNum,    // IN: vnet # to use (-1 if allocPvn == TRUE)
-	     uint8 id[])    // IN: PVN ID to use (NULL if allocPvn == FALSE)
+	     uint8 id[VNET_PVN_ID_LEN])    // IN: PVN ID to use (NULL if allocPvn == FALSE)
 {
    VNetHub *hub;
    VNetJack *jack;
@@ -348,7 +348,7 @@ VNetHubAlloc(Bool allocPvn, // IN: TRUE for PVN, FALSE for vnet
 
       if (allocPvn) {
 	 hub->hubType = HUB_TYPE_PVN;
-	 memcpy(hub->id.pvnID, id, sizeof id);
+	 memcpy(hub->id.pvnID, id, VNET_PVN_ID_LEN);
 	 ++pvnInstance;
       } else {
 	 hub->hubType = HUB_TYPE_VNET;
