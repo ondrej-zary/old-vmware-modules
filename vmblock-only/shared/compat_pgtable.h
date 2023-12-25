@@ -41,7 +41,7 @@
 
 
 /* Appeared in 2.5.5 --hpreg */
-#ifndef pte_offset_map
+#if !defined(pte_offset_map) && LINUX_VERSION_CODE < KERNEL_VERSION(6, 5, 0)
 /*  Appeared in SuSE 8.0's 2.4.18 --hpreg */
 #   ifdef pte_offset_atomic
 #      define pte_offset_map pte_offset_atomic
