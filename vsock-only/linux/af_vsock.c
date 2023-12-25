@@ -4242,7 +4242,9 @@ VSockVmciStreamSendmsg(struct socket *sock,          // IN: socket to send on
        */
 
       written = VMCIQueue_EnqueueV(vsk->produceQ, vsk->consumeQ,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
+                                   vsk->produceSize, (struct iovec *)iter_iov(&msg->msg_iter),
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
                                    vsk->produceSize, (struct iovec *)msg->msg_iter.iov,
 #else
                                    vsk->produceSize, msg->msg_iov,
@@ -4589,14 +4591,18 @@ VSockVmciStreamRecvmsg(struct socket *sock,          // IN: socket to receive fr
 
    if (flags & MSG_PEEK) {
       copied = VMCIQueue_PeekV(vsk->produceQ, vsk->consumeQ,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
+                               vsk->consumeSize, (struct iovec *)iter_iov(&msg->msg_iter), len);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
                                vsk->consumeSize, (struct iovec *)msg->msg_iter.iov, len);
 #else
                                vsk->consumeSize, msg->msg_iov, len);
 #endif
    } else {
       copied = VMCIQueue_DequeueV(vsk->produceQ, vsk->consumeQ,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
+                                  vsk->consumeSize, (struct iovec *)iter_iov(&msg->msg_iter), len);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
                                   vsk->consumeSize, (struct iovec *)msg->msg_iter.iov, len);
 #else
                                   vsk->consumeSize, msg->msg_iov, len);
