@@ -219,11 +219,7 @@ typedef char      int8;
 #      if !defined(__intptr_t_defined) && !defined(intptr_t)
 #         define __intptr_t_defined
 #         define intptr_t  intptr_t
-#         ifdef VM_X86_64
-             typedef int64     intptr_t;
-#         elif defined VM_I386 || defined VM_ARM
-             typedef int32     intptr_t;
-#         endif
+          typedef long intptr_t;
 #      endif
 
 #      ifndef _STDINT_H
