@@ -1493,7 +1493,9 @@ VMCIHost_GetUserMemory(PageStoreAttachInfo *attach,      // IN/OUT
                            1, 0,
 #endif
                            attach->producePages,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
+                           NULL);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
                            NULL, NULL);
 #else
                            NULL);
@@ -1530,7 +1532,9 @@ VMCIHost_GetUserMemory(PageStoreAttachInfo *attach,      // IN/OUT
                            1, 0,
 #endif
                            attach->consumePages,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
+                           NULL);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
                            NULL, NULL);
 #else
                            NULL);
