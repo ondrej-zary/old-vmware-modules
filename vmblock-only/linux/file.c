@@ -61,8 +61,14 @@ static int Filldir(void *buf, const char *name, int namelen,
 #endif
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
+WRAP_DIR_ITER(FileOpReaddir)
+#endif
+
 struct file_operations RootFileOps = {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
+   .iterate_shared = shared_FileOpReaddir,
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
    .iterate = FileOpReaddir,
 #else
    .readdir = FileOpReaddir,
