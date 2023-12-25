@@ -123,7 +123,7 @@ prebuild:: ;
 postbuild:: ;
 
 $(DRIVER_KO): prebuild
-	make -C $(BUILD_DIR) M=$$PWD SRCROOT=$$PWD/$(SRCROOT) \
+	KBUILD_MODPOST_WARN=1 make -C $(BUILD_DIR) M=$$PWD SRCROOT=$$PWD/$(SRCROOT) \
 	  MODULEBUILDDIR=$(MODULEBUILDDIR) modules
 	make -C $$PWD SRCROOT=$$PWD/$(SRCROOT) \
 	  MODULEBUILDDIR=$(MODULEBUILDDIR) postbuild
