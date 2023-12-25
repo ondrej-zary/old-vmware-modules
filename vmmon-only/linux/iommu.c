@@ -157,10 +157,15 @@ IOMMU_SetupMMU(VMLinux *vmLinux,               // IN: virtual machine descriptor
          map_to =  PPN_2_PA(mpn);
          map_prot = IOMMU_READ | IOMMU_WRITE;
       }
+
       if ((status = iommu_map(vmLinux->iommuDomain,
                               PPN_2_PA(ppn), map_to,
                               get_order(PAGE_SIZE),
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
+                              map_prot, GFP_KERNEL))) {
+#else
                               map_prot))) {
+#endif
          printk(KERN_ERR "%s: IOMMU Mapping of PPN 0x%x -> MPN 0x%x "
                 "could not be established.\n", __func__, ppn, mpn);
          goto out;
