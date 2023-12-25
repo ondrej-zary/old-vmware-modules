@@ -1347,7 +1347,11 @@ static int LinuxDriverMmap(struct file *filp, struct vm_area_struct *vma) {
       return err;
    }
    /* Clear VM_IO, otherwise SuSE's kernels refuse to do get_user_pages */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
+   vm_flags_clear(vma, VM_IO);
+#else
    vma->vm_flags &= ~VM_IO;
+#endif
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 2, 3)
    vma->vm_file = filp;
    filp->f_count++;
