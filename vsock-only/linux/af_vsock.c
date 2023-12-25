@@ -4328,7 +4328,9 @@ VSockVmciDgramRecvmsg(struct socket *sock,          // IN: socket to receive fro
 #endif
 {
    int err;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 19, 0)
    int noblock;
+#endif
    struct sock *sk;
    VMCIDatagram *dg;
    size_t payloadLen;
@@ -4338,7 +4340,9 @@ VSockVmciDgramRecvmsg(struct socket *sock,          // IN: socket to receive fro
    err = 0;
    sk = sock->sk;
    payloadLen = 0;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 19, 0)
    noblock = flags & MSG_DONTWAIT;
+#endif
    vmciAddr = (struct sockaddr_vm *)msg->msg_name;
 
    if (flags & MSG_OOB || flags & MSG_ERRQUEUE) {
@@ -4346,7 +4350,11 @@ VSockVmciDgramRecvmsg(struct socket *sock,          // IN: socket to receive fro
    }
 
    /* Retrieve the head sk_buff from the socket's receive queue. */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 19, 0)
+   skb = skb_recv_datagram(sk, flags, &err);
+#else
    skb = skb_recv_datagram(sk, flags, noblock, &err);
+#endif
    if (err) {
       return err;
    }
