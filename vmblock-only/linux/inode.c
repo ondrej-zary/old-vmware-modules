@@ -160,7 +160,9 @@ InodeOpLookup(struct inode *dir,      // IN: parent directory's inode
 #else
    inode->i_version = 1;
 #endif
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 0)
+   inode->i_atime = inode->i_mtime = inode_set_ctime_current(inode);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
    inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
 #else
    inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
