@@ -79,23 +79,6 @@ static inline _syscall0(int, compat_yield);
 #   define compat_yield() yield()
 #endif
 
-
-/*
- * Since 2.5.34 there are two methods to enumerate tasks:
- * for_each_process(p) { ... } which enumerates only tasks and
- * do_each_thread(g,t) { ... } while_each_thread(g,t) which enumerates
- *     also threads even if they share same pid.
- */
-#ifndef for_each_process
-#   define for_each_process(p) for_each_task(p)
-#endif
-
-#ifndef do_each_thread
-#   define do_each_thread(g, t) for_each_task(g) { t = g; do
-#   define while_each_thread(g, t) while (0) }
-#endif
-
-
 /*
  * Lock for signal mask is moving target...
  */
