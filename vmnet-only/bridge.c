@@ -42,6 +42,9 @@
 #include <linux/tcp.h>
 #include <net/tcp.h>
 #include <net/ipv6.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
+#include <net/gso.h>
+#endif
 
 #ifdef CONFIG_NET_RADIO
 #   include <linux/wireless.h>
