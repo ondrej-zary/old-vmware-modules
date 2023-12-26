@@ -371,7 +371,7 @@ static struct proto_ops vsockVmciDgramOps = {
    .sendmsg    = VSockVmciDgramSendmsg,
    .recvmsg    = VSockVmciDgramRecvmsg,
    .mmap       = sock_no_mmap,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 4, 4)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 4, 4) && LINUX_VERSION_CODE < KERNEL_VERSION(6, 5, 0)
    .sendpage   = sock_no_sendpage,
 #endif
 };
@@ -396,7 +396,7 @@ static struct proto_ops vsockVmciStreamOps = {
    .sendmsg    = VSockVmciStreamSendmsg,
    .recvmsg    = VSockVmciStreamRecvmsg,
    .mmap       = sock_no_mmap,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 4, 4)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 4, 4) && LINUX_VERSION_CODE < KERNEL_VERSION(6, 5, 0)
    .sendpage   = sock_no_sendpage,
 #endif
 };
